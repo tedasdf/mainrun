@@ -111,7 +111,7 @@ def main():
 
     wandb.init(
         project="gpt-from-scratch", 
-        entity="teedsingyau", 
+        entity="arc_agi", 
         config=hparams   # <--- pass hyperparams to W&B
     )
 
