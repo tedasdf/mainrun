@@ -1,5 +1,5 @@
-from mainrun.model.gpt import GPT, GPTConfig
-from mainrun.model.tokenizer import BPETokenizer
+from model.gpt import GPT, GPTConfig
+from model.tokenizer import BPETokenizer
 import utils
 import math, random, time
 from dataclasses import dataclass
