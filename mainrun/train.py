@@ -1,3 +1,5 @@
+from mainrun.model.gpt import GPT, GPTConfig
+from mainrun.model.tokenizer import BPETokenizer
 import utils
 import math, random, time
 from dataclasses import dataclass
@@ -11,25 +13,10 @@ from datasets import load_dataset
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from tqdm import tqdm
 import structlog
-
-@dataclass
-class Hyperparameters:
-    block_size: int = 128
-    batch_size: int = 64
-    vocab_size: int = 16_000
-    n_layer: int = 6
-    n_head: int = 8
-    d_model: int = 512
-    dropout: float = 0.1
-    lr: float = 6e-3
-    weight_decay: float = 0.0
-    evals_per_epoch: int = 3
-    
-    epochs: int = 7
-    seed: int = 1337
-    num_titles: int = 100_000
-    val_frac: float = 0.10
-    log_file: str = "./logs/mainrun.log"
+from omegaconf import OmegaConf
+from omegaconf import OmegaConf, OmegaConf
+from typing import Any
+from hyperparam_class import Hyperparameters
 
 def configure_logging(log_file: str):
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -111,114 +98,14 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
     tokenizer.train_from_iterator(titles, trainer)
     return tokenizer
 
-class BPETokenizer:
-    def __init__(self, tokenizer: Tokenizer):
-        self.tk = tokenizer
-        self.stoi = {tok: i for tok, i in tokenizer.get_vocab().items()}
-        self.itos = {i: tok for tok, i in tokenizer.get_vocab().items()}
-
-    def encode(self, s: str) -> list[int]:
-        return self.tk.encode(s).ids
-
-    def decode(self, ids: list[int]) -> str:
-        return self.tk.decode(ids, skip_special_tokens=True)
-
-    @property
-    def vocab_size(self): return self.tk.get_vocab_size()
-
-@dataclass
-class GPTConfig:
-    vocab_size: int
-    block_size: int
-    n_layer: int
-    n_head: int
-    d_model: int
-    dropout: float
-
-class CausalSelfAttention(nn.Module):
-    def __init__(self, cfg: GPTConfig):
-        super().__init__()
-        assert cfg.d_model % cfg.n_head == 0
-        self.head_dim = cfg.d_model // cfg.n_head
-        self.n_head   = cfg.n_head
-        self.qkv = nn.Linear(cfg.d_model, 3 * cfg.d_model)
-        self.proj = nn.Linear(cfg.d_model, cfg.d_model)
-        self.attn_drop = nn.Dropout(cfg.dropout)
-        self.resid_drop= nn.Dropout(cfg.dropout)
-        self.register_buffer("tril", torch.tril(torch.ones(cfg.block_size, cfg.block_size)))
-
-    def forward(self, x: torch.Tensor):
-        B, T, C = x.size()
-        qkv = self.qkv(x).view(B, T, 3, self.n_head, self.head_dim).transpose(1, 3)
-        q, k, v = qkv[..., 0, :, :], qkv[..., 1, :, :], qkv[..., 2, :, :]
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att = att.masked_fill(self.tril[:T, :T] == 0, float("-inf"))
-        att = F.softmax(att, dim=-1)
-        att = self.attn_drop(att)
-        y = att @ v
-        y = y.transpose(1, 2).contiguous().view(B, T, C)
-        return self.resid_drop(self.proj(y))
-
-class MLP(nn.Module):
-    def __init__(self, cfg: GPTConfig):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(cfg.d_model, 4 * cfg.d_model),
-            nn.GELU(),
-            nn.Linear(4 * cfg.d_model, cfg.d_model),
-            nn.Dropout(cfg.dropout),
-        )
-    def forward(self, x): return self.net(x)
-
-class Block(nn.Module):
-    def __init__(self, cfg: GPTConfig):
-        super().__init__()
-        self.ln1 = nn.LayerNorm(cfg.d_model)
-        self.ln2 = nn.LayerNorm(cfg.d_model)
-        self.attn = CausalSelfAttention(cfg)
-        self.mlp  = MLP(cfg)
-    def forward(self, x):
-        x = x + self.attn(self.ln1(x))
-        x = x + self.mlp(self.ln2(x))
-        return x
-
-class GPT(nn.Module):
-    def __init__(self, cfg: GPTConfig):
-        super().__init__()
-        self.cfg = cfg
-        self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
-        self.pos_emb   = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
-        self.drop      = nn.Dropout(cfg.dropout)
-        self.blocks    = nn.ModuleList([Block(cfg) for _ in range(cfg.n_layer)])
-        self.ln_f      = nn.LayerNorm(cfg.d_model)
-        self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
-
-        self.apply(self._init_weights)
-        self.head.weight = self.token_emb.weight
-
-    @staticmethod
-    def _init_weights(module):
-        if isinstance(module, (nn.Linear, nn.Embedding)):
-            nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            if isinstance(module, nn.Linear) and module.bias is not None:
-                nn.init.zeros_(module.bias)
-
-    def forward(self, idx: torch.Tensor, targets: torch.Tensor | None = None):
-        B, T = idx.size()
-        tok = self.token_emb(idx)
-        pos = self.pos_emb[:, :T, :]
-        x = self.drop(tok + pos)
-        for block in self.blocks: x = block(x)
-        x = self.ln_f(x)
-        logits = self.head(x)
-        if targets is None:
-            loss = None
-        else:
-            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), reduction='mean')
-        return logits, loss
 
 def main():
-    args = Hyperparameters()
+    cfg = OmegaConf.load("configs/hyperparams.yaml")
+
+    # Map into dataclass
+    hp = OmegaConf.to_object(cfg.hyperparams)
+    args = Hyperparameters(**hp)
+
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     
