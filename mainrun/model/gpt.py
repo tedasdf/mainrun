@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from datasets import load_dataset
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from dataclasses import dataclass
+from dataclasses import dataclass
 
 @dataclass
 class GPTConfig:
@@ -13,6 +14,8 @@ class GPTConfig:
     n_head: int
     d_model: int
     dropout: float
+
+    
 
     
 class CausalSelfAttention(nn.Module):
