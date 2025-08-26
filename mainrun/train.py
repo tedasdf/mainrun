@@ -103,10 +103,8 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 
 def main():
 
+    cfg = OmegaConf.load("config/hyperparams.yaml")
 
-    cfg = OmegaConf.load("configs/hyperparams.yaml")
-
-    cfg = OmegaConf.load("configs/hyperparams.yaml")
 
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
