@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/mainrun/train.py", line 211, in <module>
-    main()
-  File "/workspace/mainrun/train.py", line 119, in main
-    args = Hyperparameters(**hparams)
-TypeError: Hyperparameters.__init__() got an unexpected keyword argument 'model_arhitecture'
