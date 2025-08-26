@@ -14,9 +14,9 @@ from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from tqdm import tqdm
 import structlog
 from omegaconf import OmegaConf
-from omegaconf import OmegaConf, OmegaConf
 from typing import Any
 from hyperparam_class import Hyperparameters
+import wandb
 
 def configure_logging(log_file: str):
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -99,12 +99,26 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
     return tokenizer
 
 
+
+
 def main():
+
+
     cfg = OmegaConf.load("configs/hyperparams.yaml")
 
-    # Map into dataclass
-    hp = OmegaConf.to_object(cfg.hyperparams)
-    args = Hyperparameters(**hp)
+    cfg = OmegaConf.load("configs/hyperparams.yaml")
+
+    # Convert the OmegaConf section into a normal dict
+    hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
+
+    wandb.init(
+        project="gpt-from-scratch", 
+        entity="teedsingyau", 
+        config=hparams   # <--- pass hyperparams to W&B
+    )
+
+    # Map into dataclass for your code
+    args = Hyperparameters(**hparams)
 
     torch.manual_seed(args.seed)
     random.seed(args.seed)

@@ -1,4 +1,4 @@
-from tokenizers import Tokenizer,
+from tokenizers import Tokenizer
 
 class BPETokenizer:
     def __init__(self, tokenizer: Tokenizer):
