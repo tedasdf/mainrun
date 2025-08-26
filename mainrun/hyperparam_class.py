@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Hyperparameters:
+    model_arhitecture: str
     block_size: int
     batch_size: int
     vocab_size: int

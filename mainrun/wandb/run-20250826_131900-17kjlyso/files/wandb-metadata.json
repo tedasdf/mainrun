@@ -1,0 +1,17 @@
+{
+  "os": "Linux-5.15.167.4-microsoft-standard-WSL2-aarch64-with-glibc2.35",
+  "python": "CPython 3.10.12",
+  "startedAt": "2025-08-26T13:19:00.225215Z",
+  "program": "/workspace/mainrun/train.py",
+  "codePath": "mainrun/train.py",
+  "codePathLocal": "train.py",
+  "git": {
+    "remote": "https://github.com/tedasdf/mainrun.git",
+    "commit": "2be68d9f03196dc025d2ad2fa21ef453d081591b"
+  },
+  "email": "teedsingyau@gmail.com",
+  "root": "/workspace/mainrun",
+  "host": "73f795ed57cd",
+  "executable": "/usr/bin/python3",
+  "writerId": "k59r6spq0zkj7c38nf1zekyqav2ua2z1"
+}
