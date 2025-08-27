@@ -255,7 +255,6 @@ if __name__ == "__main__":
         #                             OmegaConf.update(cfg, "hyperparams.block_size", bs)
         #                             OmegaConf.update(cfg, "hyperparams.lr", lr)
         #                             OmegaConf.update(cfg, "hyperparams.n_layer", n_layer)
-        print(f"Running experiment with block_size={bs}, lr={lr}, n_layer={n_layer}, dropout={dropout}, weight_decay={weight_decay}, d_model={d_model}")
         #             # call your training function here
         main(cfg)
         
