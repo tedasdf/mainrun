@@ -1,6 +1,6 @@
 from model.gpt import GPT, GPTConfig
-from model.tokenizer import BPETokenizer
-import utils
+from model.tokenizer.BPETokenizer import BPETokenizer
+# import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -219,24 +219,46 @@ def main(cfg):
 
 if __name__ == "__main__":
     try:
-        cfg = OmegaConf.load("config/hyperparams.yaml")
-        for bs in [64, 128, 256]:
-            for lr in [0.006, 0.005 , 0.004, 0.003]:
-                for n_layer in [4, 6, 8]:
-                    for dropout in [0.1, 0.2, 0.3]:
-                        for weight_decay in [1e-1, 1e-2, 1e-3]:
-                            for d_model in [128, 256, 512]:
-                                for batch_size in [16,32,64]:  # keep batch size fixed
-                                    OmegaConf.update(cfg, "hyperparams.d_model", d_model)
-                                    OmegaConf.update(cfg, "hyperparams.dropout", dropout)
-                                    OmegaConf.update(cfg, "hyperparams.weight_decay", weight_decay)
-                                    OmegaConf.update(cfg, "hyperparams.block_size", bs)
-                                    OmegaConf.update(cfg, "hyperparams.lr", lr)
-                                    OmegaConf.update(cfg, "hyperparams.n_layer", n_layer)
-                                    print(f"Running experiment with block_size={bs}, lr={lr}, n_layer={n_layer}, dropout={dropout}, weight_decay={weight_decay}, d_model={d_model}")
-                    # call your training function here
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--block_size", type=int, default=128)
+        parser.add_argument("--lr", type=float, default=0.006)
+        parser.add_argument("--n_layer", type=int, default=6)
+        parser.add_argument("--dropout", type=float, default=0.1)
+        parser.add_argument("--weight_decay", type=float, default=0.0)
+        parser.add_argument("--d_model", type=int, default=512)
+        parser.add_argument("--batch_size", type=int, default=64)
 
-                                main(cfg)
+        args = parser.parse_args()
+
+        cfg = OmegaConf.load("config/hyperparams.yaml")
+        # Update cfg with args
+        OmegaConf.update(cfg, "hyperparams.block_size", args.block_size)
+        OmegaConf.update(cfg, "hyperparams.lr", args.lr)
+        OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
+        OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
+        OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
+        OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
+        OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
+
+        cfg = OmegaConf.load("config/hyperparams.yaml")
+        # for bs in [64, 128, 256]:
+        #     for lr in [0.006, 0.005 , 0.004, 0.003]:
+        #         for n_layer in [4, 6, 8]:
+        #             for dropout in [0.1, 0.2, 0.3]:
+        #                 for weight_decay in [1e-1, 1e-2, 1e-3]:
+        #                     for d_model in [128, 256, 512]:
+        #                         for batch_size in [16,32,64]:  # keep batch size fixed
+        #                             OmegaConf.update(cfg, "hyperparams.d_model", d_model)
+        #                             OmegaConf.update(cfg, "hyperparams.dropout", dropout)
+        #                             OmegaConf.update(cfg, "hyperparams.weight_decay", weight_decay)
+        #                             OmegaConf.update(cfg, "hyperparams.block_size", bs)
+        #                             OmegaConf.update(cfg, "hyperparams.lr", lr)
+        #                             OmegaConf.update(cfg, "hyperparams.n_layer", n_layer)
+        print(f"Running experiment with block_size={bs}, lr={lr}, n_layer={n_layer}, dropout={dropout}, weight_decay={weight_decay}, d_model={d_model}")
+        #             # call your training function here
+        main(cfg)
+        
     finally:
         if logger and hasattr(logger, 'file_handler'):
             logger.file_handler.close()
