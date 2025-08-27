@@ -1,6 +1,6 @@
 from model.gpt import GPT, GPTConfig
 from model.tokenizer.BPETokenizer import BPETokenizer
-import utils
+# import utils
 import math, random, time
 from dataclasses import dataclass
 import json

@@ -1,0 +1,6 @@
+hyperparameters_configured: model_arhitecture=gpt, block_size=128, batch_size=64, vocab_size=16000, n_layer=6, n_head=8, d_model=512, dropout=0.1, lr=0.006, weight_decay=0.0, evals_per_epoch=3, epochs=7, seed=1337, num_titles=100000, val_frac=0.1, log_file=./logs/mainrun.log
+device_info: device=cpu
+dataset_info: titles_count=90000, epochs=7, batches_per_epoch=134, tokens_per_epoch=1102455, vocab_size=16000
+model_info: parameters_count=27172864
+Epoch 1/7:   2%|█▌                                                                    | 3/134 [01:24<50:40, 23.21s/it]
+[    1/938] validation_step: loss=2.098004 time=21.18s
