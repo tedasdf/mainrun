@@ -2,5 +2,17 @@ hyperparameters_configured: model_arhitecture=gpt, block_size=128, batch_size=64
 device_info: device=cpu
 dataset_info: titles_count=90000, epochs=7, batches_per_epoch=134, tokens_per_epoch=1102455, vocab_size=16000
 model_info: parameters_count=27172864
-Epoch 1/7:   2%|█▌                                                                    | 3/134 [01:24<50:40, 23.21s/it]
+Epoch 1/7:   2%|█▌                                                                  | 3/134 [01:40<1:12:59, 33.43s/it]
 [    1/938] validation_step: loss=2.098004 time=21.18s
+Traceback (most recent call last):
+  File "/workspace/mainrun/train.py", line 256, in <module>
+    main(cfg)
+  File "/workspace/mainrun/train.py", line 184, in main
+    loss.backward()
+  File "/usr/local/lib/python3.10/dist-packages/torch/_tensor.py", line 648, in backward
+    torch.autograd.backward(
+  File "/usr/local/lib/python3.10/dist-packages/torch/autograd/__init__.py", line 353, in backward
+    _engine_run_backward(
+  File "/usr/local/lib/python3.10/dist-packages/torch/autograd/graph.py", line 824, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
