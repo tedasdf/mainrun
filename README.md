@@ -40,6 +40,8 @@ code .
 # This initial build may take a few minutes.
 
 # 3. Run the baseline training to see the starting point
+docker exec -it silly_chandrasekhar /bin/bash
+
 task train
 
 # 4. Analyze the baseline performance in the log file

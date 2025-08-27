@@ -16,7 +16,7 @@ tasks:
     dir: mainrun
     cmds:
       - chmod +x train.sh      # make sure the script is executable
-      - ./train.sh    
+      - ./train.sh   
 
   submit:
     deps: [checkpoint]

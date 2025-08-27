@@ -8,7 +8,7 @@ for bs in 64 128 256; do
           for d_model in 128 256 512; do
             for batch_size in 16 32 64; do
               echo "Running with bs=$bs, lr=$lr, n_layer=$n_layer, dropout=$dropout, weight_decay=$weight_decay, d_model=$d_model, batch_size=$batch_size"
-              python train.py \
+              python3 .\mainrune\train.py \
                 --block_size $bs \
                 --lr $lr \
                 --n_layer $n_layer \
