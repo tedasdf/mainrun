@@ -1,6 +1,13 @@
 #!/bin/bash
-pwd 
-python3 train.py
+
+python3 train.py \ 
+                --block_size 64 \
+                --lr 0.006 \
+                --n_layer 4 \
+                --dropout  0.1 \
+                --weight_decay 0.1 \
+                --d_model 256 \
+                --batch_size 16
 # for bs in 64 128 256; do
 #   for lr in 0.006 0.005 0.004 0.003; do
 #     for n_layer in 4 6 8; do
