@@ -1,6 +1,6 @@
 #!/bin/bash
 pwd 
-python3 mainrun/train.py
+python3 train.py
 # for bs in 64 128 256; do
 #   for lr in 0.006 0.005 0.004 0.003; do
 #     for n_layer in 4 6 8; do
