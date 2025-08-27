@@ -15,7 +15,8 @@ tasks:
     deps: [checkpoint, download]
     dir: mainrun
     cmds:
-      - python3 train.py
+      - chmod +x train.sh      # make sure the script is executable
+      - ./train.sh    
 
   submit:
     deps: [checkpoint]
