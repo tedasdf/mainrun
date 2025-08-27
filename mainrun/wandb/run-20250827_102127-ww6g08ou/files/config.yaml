@@ -1,0 +1,92 @@
+_wandb:
+    value:
+        cli_version: 0.21.1
+        code_path: code/mainrun/train.py
+        e:
+            low4s401o0i6r1tg1ehilbjbt6gdi8d2:
+                args:
+                    - --block_size
+                    - "64"
+                    - --lr
+                    - "0.006"
+                    - --n_layer
+                    - "4"
+                    - --dropout
+                    - "0.1"
+                    - --weight_decay
+                    - "0.1"
+                    - --d_model
+                    - "256"
+                    - --batch_size
+                    - "16"
+                codePath: mainrun/train.py
+                codePathLocal: train.py
+                cpu_count: 10
+                cpu_count_logical: 10
+                disk:
+                    /:
+                        total: "1081101176832"
+                        used: "5911744512"
+                email: teedsingyau@gmail.com
+                executable: /usr/bin/python3
+                git:
+                    commit: 149b83e0ea2e13d90f242453183c3f1244fd47b6
+                    remote: https://github.com/tedasdf/mainrun.git
+                host: 73f795ed57cd
+                memory:
+                    total: "8198082560"
+                os: Linux-5.15.167.4-microsoft-standard-WSL2-aarch64-with-glibc2.35
+                program: /workspace/mainrun/train.py
+                python: CPython 3.10.12
+                root: /workspace/mainrun
+                startedAt: "2025-08-27T10:21:27.316172Z"
+                writerId: low4s401o0i6r1tg1ehilbjbt6gdi8d2
+        m: []
+        python_version: 3.10.12
+        t:
+            "1":
+                - 1
+                - 49
+                - 51
+            "2":
+                - 1
+                - 49
+                - 51
+            "3":
+                - 16
+            "4": 3.10.12
+            "5": 0.21.1
+            "12": 0.21.1
+            "13": linux-aarch64
+batch_size:
+    value: 64
+block_size:
+    value: 128
+d_model:
+    value: 512
+dropout:
+    value: 0.1
+epochs:
+    value: 7
+evals_per_epoch:
+    value: 3
+log_file:
+    value: ./logs/mainrun.log
+lr:
+    value: 0.006
+model_arhitecture:
+    value: gpt
+n_head:
+    value: 8
+n_layer:
+    value: 6
+num_titles:
+    value: 100000
+seed:
+    value: 1337
+val_frac:
+    value: 0.1
+vocab_size:
+    value: 16000
+weight_decay:
+    value: 0
