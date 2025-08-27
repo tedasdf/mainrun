@@ -5,13 +5,14 @@ hyperparams:
   seed: 1337
   epochs: 7
   val_frac: 0.10
+  num_titles: 100000
+  vocab_size: 16000
   ##############################################
   # CHANGEABLE hyperparameters
   ##############################################
   model_arhitecture: "gpt"
   block_size: 128
   batch_size: 64
-  vocab_size: 16000
   n_layer: 6
   n_head: 8
   d_model: 512
@@ -19,5 +20,4 @@ hyperparams:
   lr: 0.006
   weight_decay: 0.0
   evals_per_epoch: 3
-  num_titles: 100000
   log_file: "./logs/mainrun.log"

@@ -5,6 +5,7 @@ from datasets import load_dataset
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from dataclasses import dataclass
 from dataclasses import dataclass
+import math
 
 @dataclass
 class GPTConfig:
