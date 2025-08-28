@@ -22,13 +22,14 @@ jobs:
       - name: Run training in Docker
         run: |
             docker run --rm --gpus all \
-            -v $GITHUB_WORKSPACE:/workspace \
-            -v $GITHUB_WORKSPACE/wandb_tmp:/workspace/wandb
-            -w /workspace \
-            -e WANDB_API_KEY=$WANDB_API_KEY \
-            mainrun-env \
-            /bin/bash -c "\
-                git config --global --add safe.directory /workspace && \
-                git config --global user.email 'teedsingyau@gmail.com' && \
-                git config --global user.name 'Ted Lo' && \
-                task train"
+                -v $GITHUB_WORKSPACE:/workspace \
+                -w /workspace \
+                -e WANDB_API_KEY=$WANDB_API_KEY \
+                mainrun-env \
+                /bin/bash -c "\
+                    git config --global --add safe.directory /workspace && \
+                    git config --global user.email 'teedsingyau@gmail.com' && \
+                    git config --global user.name 'Ted Lo' && \
+                    task train \
+                    rm -rf /workspace/wandb"
+            
