@@ -249,20 +249,6 @@ if __name__ == "__main__":
         OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
 
         cfg = OmegaConf.load("config/hyperparams.yaml")
-        # for bs in [64, 128, 256]:
-        #     for lr in [0.006, 0.005 , 0.004, 0.003]:
-        #         for n_layer in [4, 6, 8]:
-        #             for dropout in [0.1, 0.2, 0.3]:
-        #                 for weight_decay in [1e-1, 1e-2, 1e-3]:
-        #                     for d_model in [128, 256, 512]:
-        #                         for batch_size in [16,32,64]:  # keep batch size fixed
-        #                             OmegaConf.update(cfg, "hyperparams.d_model", d_model)
-        #                             OmegaConf.update(cfg, "hyperparams.dropout", dropout)
-        #                             OmegaConf.update(cfg, "hyperparams.weight_decay", weight_decay)
-        #                             OmegaConf.update(cfg, "hyperparams.block_size", bs)
-        #                             OmegaConf.update(cfg, "hyperparams.lr", lr)
-        #                             OmegaConf.update(cfg, "hyperparams.n_layer", n_layer)
-        #             # call your training function here
         main(cfg)
         
     finally:
