@@ -13,16 +13,21 @@ jobs:
         run: |
             export $(grep -v '^#' .env | xargs)
 
+      - name: Update local repo
+        run: |
+            cd /home/labadmin/Documents/mainrun
+            git reset --hard origin/main
+            git pull origin main
+
       - name: Run training in Docker
         run: |
-            docker run --gpus all \
-                -v /home/labadmin/Documents/mainrun:/workspace \
-                -w /workspace \
-                -e WANDB_API_KEY=$WANDB_API_KEY \
-                mainrun-env \
-                /bin/bash -c "\
-                    git config --global --add safe.directory /workspace && \
-                    git config --global user.email 'teedsingyau@gmail.com' && \
-                    git config --global user.name 'Ted Lo' && \
-                    task train"
-
+            docker run --rm --gpus all \
+            -v /home/labadmin/Documents/mainrun:/workspace \
+            -w /workspace \
+            -e WANDB_API_KEY=$WANDB_API_KEY \
+            mainrun-env \
+            /bin/bash -c "\
+                git config --global --add safe.directory /workspace && \
+                git config --global user.email 'teedsingyau@gmail.com' && \
+                git config --global user.name 'Ted Lo' && \
+                task train"
