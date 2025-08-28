@@ -1,0 +1,22 @@
+name: Train Model
+
+on:
+  workflow_dispatch:   # This makes it manual
+
+jobs:
+  train:
+    runs-on: [self-hosted, x64, docker]  # your self-hosted runner
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Load .env
+        run: |
+            export $(grep -v '^#' .env | xargs)
+
+      - name: Run training in Docker
+        run: |
+            sudo docker run --gpus all -it - v /home/labadmin/Documents/mainrun:/workspace mainrun-env
+            git config --global --add safe.directory /workspace
+            git config --global user.email "teedsingyau@gmail.com"
+            git config --global user.name "Ted Lo"
+            task train
