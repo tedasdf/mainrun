@@ -14,6 +14,8 @@ jobs:
             export $(grep -v '^#' .env | xargs)
 
       - name: Run training in Docker
+        env:
+            WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: |
             docker run --rm --gpus all \
                 -v $GITHUB_WORKSPACE:/workspace \
@@ -25,4 +27,12 @@ jobs:
                     git config --global user.email 'teedsingyau@gmail.com' && \
                     git config --global user.name 'Ted Lo' && \
                     task train"
-            
+  
+      - name: Remove WandB logs
+        run: |
+            if [ -d "./wandb" ]; then
+            sudo rm -rf ./wandb
+            echo "Deleted wandb logs"
+            else
+            echo "No wandb folder found"
+            fi
