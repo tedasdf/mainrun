@@ -18,6 +18,7 @@ jobs:
             docker run --gpus all \
                 -v /home/labadmin/Documents/mainrun:/workspace \
                 -w /workspace \
+                -e WANDB_API_KEY=$WANDB_API_KEY \
                 mainrun-env \
                 /bin/bash -c "\
                     git config --global --add safe.directory /workspace && \
