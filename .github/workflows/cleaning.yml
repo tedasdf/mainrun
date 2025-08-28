@@ -1,0 +1,31 @@
+name: Clean W&B Logs
+
+on:
+  workflow_dispatch:   # manual trigger
+
+jobs:
+  cleanup:
+    runs-on: [self-hosted, linux, x64]  # or your runner labels
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Remove wandb folder
+        run: |
+          if [ -d "./wandb" ]; then
+            sudo rm -rf ./wandb
+            echo "Deleted wandb logs"
+          else
+            echo "No wandb folder found"
+          fi
+
+      - name: Add wandb to .gitignore
+        run: |
+          if ! grep -q "^wandb/" .gitignore; then
+            echo "wandb/" >> .gitignore
+            git add .gitignore
+            git commit -m "Add wandb/ to .gitignore"
+            git push
+          else
+            echo "wandb/ already in .gitignore"
+          fi
