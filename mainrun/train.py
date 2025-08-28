@@ -216,6 +216,17 @@ def main(cfg):
 
 if __name__ == "__main__":
     try:
+        import os
+        from dotenv import load_dotenv
+        load_dotenv(dotenv_path=".env")  # or just load_dotenv() if .env is in root
+
+        # Access your W&B API key
+        api_key = os.getenv("WANDB_API_KEY")
+
+        # Log in programmatically
+        wandb.login(key=api_key)
+        # login programmatically
+        wandb.login()
         import argparse
         parser = argparse.ArgumentParser()
         parser.add_argument("--block_size", type=int, default=128)
