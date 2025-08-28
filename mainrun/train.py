@@ -225,8 +225,7 @@ if __name__ == "__main__":
 
         # Log in programmatically
         wandb.login(key=api_key)
-        # login programmatically
-        wandb.login()
+
         import argparse
         parser = argparse.ArgumentParser()
         parser.add_argument("--block_size", type=int, default=128)
