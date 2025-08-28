@@ -13,11 +13,6 @@ jobs:
         run: |
             export $(grep -v '^#' .env | xargs)
 
-      - name: Update local repo
-        run: |
-            cd /home/labadmin/Documents/mainrun
-            git reset --hard origin/main
-            git pull origin main
 
       - name: Run training in Docker
         run: |
