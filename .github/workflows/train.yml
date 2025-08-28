@@ -13,7 +13,6 @@ jobs:
         run: |
             export $(grep -v '^#' .env | xargs)
 
-
       - name: Run training in Docker
         run: |
             docker run --rm --gpus all \
@@ -25,6 +24,5 @@ jobs:
                     git config --global --add safe.directory /workspace && \
                     git config --global user.email 'teedsingyau@gmail.com' && \
                     git config --global user.name 'Ted Lo' && \
-                    task train \
-                    rm -rf /workspace/wandb"
+                    task train"
             
