@@ -1,0 +1,16 @@
+name: Auto Update Code
+
+on:
+  push:
+    branches:
+      - main   # run only when you push to main
+
+jobs:
+  update:
+    runs-on: [self-hosted, x64, linux, docker]   # your self-hosted runner
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /home/labadmin/Documents/mainrun
+          git reset --hard
+          git pull origin main
