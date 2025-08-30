@@ -9,8 +9,8 @@ jobs:
   update:
     runs-on: [self-hosted, x64, linux, docker]   # your self-hosted runner
     steps:
-      - name: Pull latest code
+      - name: Pull latest code safely
         run: |
-          cd /home/labadmin/Documents/mainrun
-          git reset --hard
-          git pull origin main
+            cd /home/labadmin/Documents/mainrun
+            git fetch origin
+            git reset --hard origin/main
