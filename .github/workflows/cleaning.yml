@@ -33,6 +33,7 @@ jobs:
           cd /home/labadmin/Documents/mainrun
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull
           git add ./mainrun/logs
           git commit -m "Auto-commit: Update model after training" || echo "No changes to commit"
           git remote set-url origin https://tedasfd:${GITHUB_TOKEN}@github.com/tedasdf/mainrun.git
