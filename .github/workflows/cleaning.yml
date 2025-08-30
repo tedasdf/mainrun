@@ -8,8 +8,6 @@ jobs:
     runs-on: [self-hosted, x64, linux, docker]
 
     steps:
-      - uses: actions/checkout@v3
-
       - name: Remove WandB logs
         run: |
           if [ -d "/home/labadmin/Documents/mainrun/mainrun/wandb" ]; then
