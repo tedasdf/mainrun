@@ -248,7 +248,6 @@ if __name__ == "__main__":
         OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
         OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
 
-        cfg = OmegaConf.load("config/hyperparams.yaml")
         main(cfg)
         
     finally:
