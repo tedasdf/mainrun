@@ -2,4 +2,3 @@
 /mainrun/wandb/
 __pycache__/
 **/__pycache__/
-mainrun/logs/
