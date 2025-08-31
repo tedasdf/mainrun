@@ -1,6 +1,6 @@
 from model.gpt import GPT, GPTConfig
 from model.tokenizer.BPETokenizer import BPETokenizer
-# import utils
+import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -104,7 +104,7 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
-
+    print(hparams)
     wandb.init(
         project="gpt-from-scratch", 
         entity="arc_agi", 

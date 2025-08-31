@@ -18,3 +18,4 @@ class Hyperparameters:
     num_titles: int
     val_frac: float
     log_file: str
+    bottleneck_size: int  # Set to 0 for no bottleneck, >0 for bottleneck size
