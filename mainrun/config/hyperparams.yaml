@@ -11,9 +11,6 @@ hyperparams:
   # CHANGEABLE hyperparameters
   ##############################################
   model_arhitecture: "gpt"
-  lr: 0.006
-  weight_decay: 0.0
-  evals_per_epoch: 3
   log_file: "./logs/mainrun.log"
   ###############################################
   # MODEL hyperparameters (also in model.yaml)
@@ -25,3 +22,10 @@ hyperparams:
   d_model: 512 # Dimension of the model
   dropout: 0.1
   bottleneck_size: 256  # Set to 0 for no bottleneck, >0 for bottleneck size
+  ###############################################
+  # TRaining hyperparameters
+  ###############################################
+  lr: 0.006
+  weight_decay: 0.0
+  evals_per_epoch: 3
+  optimizer: "sgd"
