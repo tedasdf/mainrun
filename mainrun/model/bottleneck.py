@@ -1,3 +1,4 @@
+from model.gpt import Block
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,40 +14,6 @@ class BottleneckGPTConfig:
     d_model: int
     dropout: float
     bottleneck_size: int
-
-# class BottleneckAttention(nn.Module):
-#     def __init__(self, cfg: BottleneckGPTConfig):
-#         super().__init__()
-#         assert cfg.d_model % cfg.n_head == 0
-#         self.head_dim = cfg.d_model // cfg.n_head
-#         self.n_head   = cfg.n_head
-#         self.bottleneck_size = cfg.bottleneck_size
-
-#         self.qkv = nn.Linear(cfg.d_model, 3 * cfg.d_model)
-#         self.bottleneck_proj = nn.Linear(cfg.d_model, cfg.bottleneck_size)
-#         self.proj = nn.Linear(cfg.d_model, cfg.d_model)
-#         self.attn_drop = nn.Dropout(cfg.dropout)
-#         self.resid_drop= nn.Dropout(cfg.dropout)
-#         self.register_buffer("tril", torch.tril(torch.ones(cfg.block_size, cfg.block_size)))
-
-#     def forward(self, x: torch.Tensor):
-#         B, T, C = x.size()
-#         qkv = self.qkv(x).view(B, T, 3, self.n_head, self.head_dim).transpose(1, 3)
-#         q, k, v = qkv[..., 0, :, :], qkv[..., 1, :, :], qkv[..., 2, :, :]
-
-#         # Project to bottleneck space
-#         k_bottleneck = self.bottleneck_proj(k.reshape(B, T, C)).view(B, T, self.n_head, -1).transpose(1, 3)
-#         v_bottleneck = self.bottleneck_proj(v.reshape(B, T, C)).view(B, T, self.n_head, -1).transpose(1, 3)
-
-#         att = (q @ k_bottleneck.transpose(-2, -1)) * (1.0 / (k_bottleneck.size(-1) ** 0.5))
-#         att = att.masked_fill(self.tril[:T, :T] == 0, float("-inf"))
-#         att = F.softmax(att, dim=-1)
-#         att = self.attn_drop(att)
-#         y = att @ v_bottleneck
-#         y = y.transpose(1, 2).contiguous().view(B, T, C)
-#         return self.resid_drop(self.proj(y))
-
-
 
 
 class BottleneckGPT(nn.Module):

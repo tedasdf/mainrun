@@ -1,4 +1,5 @@
-from model.attention.Causalattention import CausalSelfAttention
+
+from attention import  CausalSelfAttention
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -16,7 +17,7 @@ class GPTConfig:
     n_head: int
     d_model: int
     dropout: float
-
+    bottleneck_dim: int = None  # default to 0 for no bottleneck
     
 class MLP(nn.Module):
     def __init__(self, cfg: GPTConfig):
@@ -76,3 +77,23 @@ class GPT(nn.Module):
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), reduction='mean')
         return logits, loss
     
+
+
+
+if __name__ == "__main__":
+    cfg = GPTConfig(
+        vocab_size=16000,
+        block_size=128,
+        n_layer=6,
+        n_head=8,
+        d_model=512,
+        dropout=0.1,
+        bottleneck_dim=256  # No bottleneck
+    )
+    model = GPT(cfg)
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+ 
+    print(f"Trainable params: {trainable_params:,}")
+    x = torch.randint(0, cfg.vocab_size, (2, cfg.block_size))  # [batch_size, seq_len]
+    logits, loss = model(x, x)
+    print(logits.shape, loss)

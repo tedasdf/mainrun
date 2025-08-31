@@ -152,6 +152,7 @@ def main(cfg):
         n_head     = args.n_head,
         d_model    = args.d_model,
         dropout    = args.dropout,
+        bottleneck_dim = args.bottleneck_size if args.bottleneck_size > 0 else None
     )
     model = GPT(cfg).to(device)
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -247,7 +248,6 @@ if __name__ == "__main__":
         OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
         OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
         OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
-
         main(cfg)
         
     finally:
