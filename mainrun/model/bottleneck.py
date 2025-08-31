@@ -23,9 +23,23 @@ class BottleneckGPT(nn.Module):
         self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
         self.pos_emb = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
         self.drop = nn.Dropout(cfg.dropout)
-        self.blocks = nn.ModuleList([
-            Block(cfg) for _ in range(cfg.n_layer)]
-        )
+        self.blocks = nn.ModuleList([])
+        cfg = {
+            "d_model": cfg.d_model,
+            "n_head": cfg.n_head,
+            "dropout": cfg.dropout,
+            "bottleneck_size": cfg.bottleneck_size
+        }
+        for _ in range(cfg.n_layer):
+            cfg['d_model'] /= 2
+            block_cfg = Block(
+                d_model=cfg.d_model,
+                n_head=cfg.n_head,
+                dropout=cfg.dropout,
+                bottleneck_dim=cfg.bottleneck_size if cfg.bottleneck_size > 0 else None
+            )
+            self.blocks.append(block_cfg)
+
         self.ln_f = nn.LayerNorm(cfg.d_model)
         self.head = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 
