@@ -1,6 +1,6 @@
 from model.gpt import GPT, GPTConfig
 from model.tokenizer.BPETokenizer import BPETokenizer
-import utils
+# import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -113,7 +113,7 @@ def main(cfg):
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
-
+    print(args)
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     
@@ -152,7 +152,7 @@ def main(cfg):
         n_head     = args.n_head,
         d_model    = args.d_model,
         dropout    = args.dropout,
-        bottleneck_dim = args.bottleneck_dim if args.bottleneck_dim > 0 else None
+        bottleneck_dim = args.bottleneck_size if args.bottleneck_size > 0 else None
     )
     model = GPT(cfg).to(device)
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
