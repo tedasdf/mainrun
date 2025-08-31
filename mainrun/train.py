@@ -105,11 +105,11 @@ def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
     print(hparams)
-    wandb.init(
-        project="gpt-from-scratch", 
-        entity="arc_agi", 
-        config=hparams   # <--- pass hyperparams to W&B
-    )
+    # wandb.init(
+    #     project="gpt-from-scratch", 
+    #     entity="arc_agi", 
+    #     config=hparams   # <--- pass hyperparams to W&B
+    # )
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
@@ -144,21 +144,44 @@ def main(cfg):
                batches_per_epoch=batches,
                tokens_per_epoch=len(train_ids),
                vocab_size=tok.vocab_size)
-
-    cfg = GPTConfig(
-        vocab_size = tok.vocab_size,
-        block_size = args.block_size,
-        n_layer    = args.n_layer,
-        n_head     = args.n_head,
-        d_model    = args.d_model,
-        dropout    = args.dropout,
-        bottleneck_dim = args.bottleneck_size if args.bottleneck_size > 0 else None
-    )
-    model = GPT(cfg).to(device)
+    if args.model_arhitecture == "gpt":
+        cfg = GPTConfig(
+            vocab_size = tok.vocab_size,
+            block_size = args.block_size,
+            n_layer    = args.n_layer,
+            n_head     = args.n_head,
+            d_model    = args.d_model,
+            dropout    = args.dropout,
+            bottleneck_dim = args.bottleneck_size if args.bottleneck_size > 0 else None
+        )
+        model = GPT(cfg).to(device)
+    elif args.model_arhitecture == "bottleneck_gpt":
+        from model.bottleneck import GPUnetT, BottleneckGPTConfig
+        cfg = BottleneckGPTConfig(
+            vocab_size = tok.vocab_size,
+            block_size = args.block_size,
+            n_layer    = args.n_layer,
+            n_head     = args.n_head,
+            d_model    = args.d_model,
+            dropout    = args.dropout,
+            bottleneck_size = [args.bottleneck_size] * args.n_layer if args.bottleneck_size > 0 else [args.d_model] * args.n_layer
+        )
+        model = GPUnetT(cfg).to(device)
+    else:
+        raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")
+        
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.log("model_info", parameters_count=model_params)
-    
-    opt = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    if args.optimizer == "sgd":
+        opt = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optimizer == "adamw":
+        opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optimizer == "adam":
+        opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optimizer == "adagrad":
+        opt = torch.optim.Adagrad(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    else:
+        raise ValueError(f"Unsupported optimizer: {args.optimizer}")
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max_steps)
 
     def evaluate():
@@ -194,11 +217,11 @@ def main(cfg):
                       loss=loss.item(),
                       elapsed_time=elapsed,
                       prnt=False)
-            wandb.log({
-                "train/loss": loss.item(),
-                "train/step": step,
-                "train/elapsed_time": elapsed
-            })
+            # wandb.log({
+            #     "train/loss": loss.item(),
+            #     "train/step": step,
+            #     "train/elapsed_time": elapsed
+            # })
             
             if step == 1 or step % eval_interval == 0 or step == max_steps:
                 val_loss = evaluate()
@@ -208,12 +231,12 @@ def main(cfg):
                           loss=val_loss,
                           elapsed_time=elapsed)
                 
-                wandb.log({
-                    "val/step" : step,
-                    "val/loss": val_loss,
-                    "val/step": step,
-                    "val/elapsed_time": elapsed
-                })
+                # wandb.log({
+                #     "val/step" : step,
+                #     "val/loss": val_loss,
+                #     "val/step": step,
+                #     "val/elapsed_time": elapsed
+                # })
 
 if __name__ == "__main__":
     try:
