@@ -104,12 +104,12 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
-    print(hparams)
-    # wandb.init(
-    #     project="gpt-from-scratch", 
-    #     entity="arc_agi", 
-    #     config=hparams   # <--- pass hyperparams to W&B
-    # )
+    
+    wandb.init(
+        project="gpt-from-scratch", 
+        entity="arc_agi", 
+        config=hparams   # <--- pass hyperparams to W&B
+    )
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
@@ -217,11 +217,11 @@ def main(cfg):
                       loss=loss.item(),
                       elapsed_time=elapsed,
                       prnt=False)
-            # wandb.log({
-            #     "train/loss": loss.item(),
-            #     "train/step": step,
-            #     "train/elapsed_time": elapsed
-            # })
+            wandb.log({
+                "train/loss": loss.item(),
+                "train/step": step,
+                "train/elapsed_time": elapsed
+            })
             
             if step == 1 or step % eval_interval == 0 or step == max_steps:
                 val_loss = evaluate()
@@ -231,12 +231,29 @@ def main(cfg):
                           loss=val_loss,
                           elapsed_time=elapsed)
                 
-                # wandb.log({
-                #     "val/step" : step,
-                #     "val/loss": val_loss,
-                #     "val/step": step,
-                #     "val/elapsed_time": elapsed
-                # })
+                wandb.log({
+                    "val/step" : step,
+                    "val/loss": val_loss,
+                    "val/step": step,
+                    "val/elapsed_time": elapsed
+                })
+    artifact = wandb.Artifact("logs" , type="log")
+
+    artifact.add_file(args.log_file)
+    wandb.log_artifact(artifact)
+    logger.log("training_complete", model_path=args.model_out_path)
+    wandb.finish()
+
+
+
+
+
+def sweep_train():
+    with wandb.init() as run:
+        cfg = OmegaConf.load({"hyperparams": dict(run.config)})
+        main(cfg)
+
+    
 
 if __name__ == "__main__":
     try:
@@ -259,20 +276,27 @@ if __name__ == "__main__":
         parser.add_argument("--weight_decay", type=float, default=0.0)
         parser.add_argument("--d_model", type=int, default=512)
         parser.add_argument("--batch_size", type=int, default=64)
+        parser.add_argument("--bottleneck_size", type=int, default=256)
+        parser.add_argument("--optimizer", type=str, default="sgd")
+        parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
 
         args = parser.parse_args()
 
-        cfg = OmegaConf.load("config/hyperparams.yaml")
-        # Update cfg with args
-        OmegaConf.update(cfg, "hyperparams.block_size", args.block_size)
-        OmegaConf.update(cfg, "hyperparams.lr", args.lr)
-        OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
-        OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
-        OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
-        OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
-        OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
-        main(cfg)
-        
+        if args.sweep:
+            sweep_id = wandb.sweep("sweep.yaml", project="gpt-from-scratch", entity="arc_agi")
+            wandb.agent(sweep_id, function=sweep_train)
+        else:
+            cfg = OmegaConf.load("config/hyperparams.yaml")
+            # Update cfg with args
+            OmegaConf.update(cfg, "hyperparams.block_size", args.block_size)
+            OmegaConf.update(cfg, "hyperparams.lr", args.lr)
+            OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
+            OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
+            OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
+            OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
+            OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
+            main(cfg)
+            
     finally:
         if logger and hasattr(logger, 'file_handler'):
             logger.file_handler.close()
