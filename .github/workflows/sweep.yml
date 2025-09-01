@@ -22,6 +22,7 @@ jobs:
             -v /home/labadmin/Documents/mainrun:/workspace \
             -w /workspace \
             --env-file /home/labadmin/Documents/mainrun/.env \
+            -e WANDB_PYTHON_EXECUTABLE=python3 \
             mainrun-env \
               bash -c "git config --global --add safe.directory /workspace && \
                        git config --global user.email 'teedsingyau@gmail.com' && \
