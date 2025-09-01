@@ -19,16 +19,17 @@ jobs:
           SWEEP_ID: ${{ secrets.SWEEP_API }}
         run: |
           docker run --rm --gpus all \
-            -v /home/labadmin/Documents/mainrun:/workspace \
-            -w /workspace/mainrun \
-            --env-file /home/labadmin/Documents/mainrun/.env \
-            -e WANDB_PYTHON_EXECUTABLE=python3 \
-            mainrun-env \
-              bash -c " ln -s /usr/bin/python3 /usr/bin/python && \
-                        git config --global --add safe.directory /workspace && \
-                        git config --global user.email 'teedsingyau@gmail.com' && \
-                        git config --global user.name 'Ted Lo' && \
-                        wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}"
+          -v /home/labadmin/Documents/mainrun:/workspace \
+          -w /workspace/mainrun \
+          --env-file /home/labadmin/Documents/mainrun/.env \
+          -e WANDB_PYTHON_EXECUTABLE=/usr/bin/python3 \
+          -e PYTHONPATH=/workspace/mainrun \
+          mainrun-env \
+          bash -c "git config --global --add safe.directory /workspace && \
+                  git config --global user.email 'teedsingyau@gmail.com' && \
+                  git config --global user.name 'Ted Lo' && \
+                  wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}"
+
 
       - name: Cleanup WandB logs
         run: |
