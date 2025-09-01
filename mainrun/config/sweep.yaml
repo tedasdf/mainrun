@@ -1,0 +1,18 @@
+program: train.py
+method: random   # or grid, or bayes
+metric:
+  name: val/loss
+  goal: minimize
+parameters:
+  lr:
+    values: [0.01, 0.005, 0.001]
+  batch_size:
+    values: [32, 64, 128]
+  block_size:
+    values: [128, 256]
+  optimizer:
+    values: ["sgd", "adamw", "adam"]
+  dropout:
+    values: [0.1, 0.2, 0.3]
+  bottleneck_size:
+    values: [0, 128, 256, 512]
