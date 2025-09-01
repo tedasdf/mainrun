@@ -1,5 +1,5 @@
 
-from model.attention.Causalattention import CausalSelfAttention
+from mainrun.model.attention.attention import CausalSelfAttention
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
