@@ -32,20 +32,4 @@ jobs:
                   wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}"
 
 
-      - name: Cleanup WandB logs
-        run: |
-          if [ -d "/home/labadmin/Documents/mainrun/mainrun/wandb" ]; then
-            sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/wandb
-            echo "Deleted wandb logs"
-          else
-            echo "No wandb folder found"
-          fi
-
-      - name: Cleanup __pycache__
-        run: |
-          if [ -d "/home/labadmin/Documents/mainrun/mainrun/__pycache__" ]; then
-            sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/__pycache__
-            echo "Deleted __pycache__"
-          else
-            echo "No __pycache__ folder found"
-          fi
+    
