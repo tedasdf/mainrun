@@ -1,4 +1,4 @@
-from gpt import Block
+from model.gpt import Block
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
