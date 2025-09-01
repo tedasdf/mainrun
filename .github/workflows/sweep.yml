@@ -20,7 +20,7 @@ jobs:
         run: |
           docker run --rm --gpus all \
             -v /home/labadmin/Documents/mainrun:/workspace \
-            -w /workspace \
+            -w /workspace/mainrun \
             --env-file /home/labadmin/Documents/mainrun/.env \
             -e WANDB_PYTHON_EXECUTABLE=python3 \
             mainrun-env \
