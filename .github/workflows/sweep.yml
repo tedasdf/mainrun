@@ -25,7 +25,8 @@ jobs:
           -e WANDB_PYTHON_EXECUTABLE=/usr/bin/python3 \
           -e PYTHONPATH=/workspace/mainrun \
           mainrun-env \
-          bash -c "git config --global --add safe.directory /workspace && \
+          bash -c "ln -s /usr/bin/python3 /usr/bin/python && \
+                  git config --global --add safe.directory /workspace && \
                   git config --global user.email 'teedsingyau@gmail.com' && \
                   git config --global user.name 'Ted Lo' && \
                   wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}"
