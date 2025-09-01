@@ -11,7 +11,7 @@ jobs:
       - name: Remove WandB logs
         run: |
           if [ -d "/home/labadmin/Documents/mainrun/mainrun/wandb" ]; then
-            rm -rf /home/labadmin/Documents/mainrun/mainrun/wandb
+            sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/wandb
             echo "Deleted wandb logs"
           else
             echo "No wandb folder found"
@@ -20,7 +20,7 @@ jobs:
       - name: Remove __pyacahe__ logs
         run: |
           if [ -d "/home/labadmin/Documents/mainrun/mainrun/__pycache__" ]; then
-            rm -rf /home/labadmin/Documents/mainrun/mainrun/__pycache__
+            sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/__pycache__
             echo "Deleted __pycache__ logs"
           else
             echo "No __pycache__ folder found"
