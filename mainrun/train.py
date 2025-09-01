@@ -241,7 +241,6 @@ def main(cfg):
 
     artifact.add_file(args.log_file)
     wandb.log_artifact(artifact)
-    logger.log("training_complete", model_path=args.model_out_path)
     wandb.finish()
 
 
