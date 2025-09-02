@@ -5,14 +5,16 @@ metric:
   goal: minimize
 parameters:
   lr:
-    values: [0.01, 0.005, 0.001]
+    values: [ 0.012 , 0.01, 0.007 ,  0.005]
   batch_size:
-    values: [32, 64, 128]
+    values: [128]
   block_size:
-    values: [128, 256]
+    values: [256 , 512]
   optimizer:
-    values: ["sgd", "adamw", "adam"]
+    values: ["sgd", "adamw", "adagrad"]
   dropout:
     values: [0.1, 0.2, 0.3]
+  weight_decay:
+    values: [0.0, 0.01, 0.1]
   bottleneck_size:
     values: [0, 128, 256, 512]
