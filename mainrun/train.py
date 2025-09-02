@@ -163,14 +163,29 @@ def main(cfg):
                 block_size=args.context_length,
                 dropout=args.dropout
             ),
-            output_dim=args.d_model,
+            hidden_layer=args.d_model,
             norm_type='pre'  # or 'post'
         )
 
         model = GPT(cfg).to(device)
     elif args.model_arhitecture == "bottleneck_gpt":
         
-        cfg = BottleneckGPTConfig(**args)
+        cfg = BottleneckGPTConfig(
+            vocab_size=args.vocab_size,
+            block_size=args.context_length,
+            n_layer=args.n_layer,
+            d_model=args.d_model,
+            dropout=args.dropout,
+            attn_config = AttnConfig(
+                d_model=args.d_model,
+                n_head=args.n_head,
+                block_size=args.context_length,
+                dropout=args.dropout
+            ),
+            hidden_layer=args.d_model,
+            norm_type='pre',  # or 'post'
+            hidden_layer_list=args.bottleneck_sizes
+        )
 
         model = GPUnetT(cfg).to(device)
     else:

@@ -5,12 +5,11 @@ from model.attention.attention import (
     SparseAttnConfig,
     SparseCausalSelfAttention,
     BottleneckAttnConfig,
-    CausalBottleneckAttn)
+    CausalBottleneckAttn
+)
+
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
-from datasets import load_dataset
-from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from dataclasses import dataclass
 from dataclasses import dataclass
 
@@ -33,28 +32,28 @@ class GPTConfig:
     d_model: int
     dropout: float
     attn_config : AttnConfig
-    output_dim : int
+    hidden_layer : int
     norm_type: str  # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
 
 
 
 class MLP(nn.Module):
-    def __init__(self, output_dim: int, dropout: float):
+    def __init__(self, hidden_layer: int, dropout: float):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(output_dim, 4 * output_dim),
+            nn.Linear(hidden_layer, 4 * hidden_layer),
             nn.GELU(),
-            nn.Linear(4 * output_dim, output_dim),
+            nn.Linear(4 * hidden_layer, hidden_layer),
             nn.Dropout(dropout),
         )
     def forward(self, x): return self.net(x)
 
 class Block(nn.Module):
-    def __init__(self, attn_cfg: GPTConfig, output_dim: int, norm_type: str, dropout: float):
+    def __init__(self, attn_cfg: GPTConfig, hidden_layer: int, norm_type: str, dropout: float):
         super().__init__()
-        self.ln1 = nn.LayerNorm(output_dim)
-        self.ln2 = nn.LayerNorm(output_dim)
+        self.ln1 = nn.LayerNorm(hidden_layer)
+        self.ln2 = nn.LayerNorm(hidden_layer)
 
         if isinstance(attn_cfg, AttnConfig):
             self.attn = CausalSelfAttention(attn_cfg)
@@ -66,7 +65,7 @@ class Block(nn.Module):
             raise ValueError("Unsupported attention configuration")
         
         self.norm_type = norm_type
-        self.mlp  = MLP(output_dim , dropout)
+        self.mlp  = MLP(hidden_layer , dropout)
     def forward(self, x):
         x = x + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
@@ -80,7 +79,7 @@ class GPT(nn.Module):
         self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
         self.pos_emb   = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
         self.drop      = nn.Dropout(cfg.dropout)
-        self.blocks    = nn.ModuleList([Block(cfg.attn_config, cfg.output_dim,  cfg.norm_type, cfg.dropout) for _ in range(cfg.n_layer)])
+        self.blocks    = nn.ModuleList([Block(cfg.attn_config, cfg.hidden_layer,  cfg.norm_type, cfg.dropout) for _ in range(cfg.n_layer)])
         self.ln_f      = nn.LayerNorm(cfg.d_model)
         self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 

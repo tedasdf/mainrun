@@ -11,7 +11,7 @@ hyperparams:
   ##############################################
   # CHANGEABLE hyperparameters
   ##############################################
-  model_arhitecture: "gpt" # gpt, bottleneck_gpt, unet_gpt
+  model_arhitecture: "bottleneck_gpt" # gpt, bottleneck_gpt, unet_gpt
   log_file: "./logs/mainrun.log"
   ###############################################
   # MODEL hyperparameters (also in model.yaml)
@@ -40,12 +40,12 @@ model_configs:
     n_layer: 6
     dropout: 0.1
   bottleneck_gpt:
-    d_model: 512
-    n_head: 8
-    n_layer: 6
-    dropout: 0.1
-    bottleneck_size: 256
-  unet_gpt:
+  #   d_model: 512
+  #   n_head: 8
+  #   n_layer: 6
+  #   dropout: 0.1
+  #   bottleneck_size: 256
+  # unet_gpt:
     d_model: 512
     n_head: 8
     n_layer: 6

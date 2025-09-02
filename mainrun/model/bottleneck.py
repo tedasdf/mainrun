@@ -1,4 +1,5 @@
-from model.gpt import Block
+from model.gpt import Block , GPTConfig
+from model.attention.attention import AttnConfig
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,23 +7,10 @@ from dataclasses import dataclass
 from typing import List
 
 @dataclass
-class BottleneckGPTConfig:
-    vocab_size: int
-    block_size: int
-    n_layer: int
-    n_head: int
-    d_model: int
-    dropout: float
-    bottleneck_size: List[int]
+class BottleneckGPTConfig(GPTConfig):
+    hidden_layer_list: List[int]
+    
 
-
-@dataclass
-class BlockConfig:
-    d_model: int
-    n_head: int
-    dropout: float
-    block_size: int
-    bottleneck_dim: int = None
 
 
 class GPUnetT(nn.Module):
@@ -35,14 +23,14 @@ class GPUnetT(nn.Module):
         self.blocks = nn.ModuleList([])
 
         for i in range(cfg.n_layer):
-            block_cfg = BlockConfig(
-                d_model=cfg.d_model,
-                n_head=cfg.n_head,
-                dropout=cfg.dropout,
-                block_size=cfg.block_size,
-                bottleneck_dim=cfg.bottleneck_size[i]  # use per-block size
+            self.blocks.append(
+                Block(
+                    cfg.attn_config, 
+                    cfg.hidden_layer_list[i],  
+                    cfg.norm_type, 
+                    cfg.dropout
+                )
             )
-            self.blocks.append(Block(block_cfg))
 
         self.ln_f = nn.LayerNorm(cfg.d_model)
         self.head = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
