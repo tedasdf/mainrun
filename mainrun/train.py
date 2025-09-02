@@ -1,7 +1,8 @@
 from model.gpt import GPT, GPTConfig
 from model.attention.attention import AttnConfig
 from model.tokenizer.BPETokenizer import BPETokenizer
-# import utils
+from model.bottleneck import GPUnetT, BottleneckGPTConfig
+import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -168,8 +169,9 @@ def main(cfg):
 
         model = GPT(cfg).to(device)
     elif args.model_arhitecture == "bottleneck_gpt":
-        from model.bottleneck import GPUnetT, BottleneckGPTConfig
+        
         cfg = BottleneckGPTConfig(**args)
+
         model = GPUnetT(cfg).to(device)
     else:
         raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")

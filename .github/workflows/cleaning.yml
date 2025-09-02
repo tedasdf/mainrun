@@ -7,34 +7,34 @@ jobs:
   cleanup:
     runs-on: [self-hosted, x64, linux, docker]
 
-    steps:
-      - name: Remove WandB logs
-        run: |
-          if [ -d "/home/labadmin/Documents/mainrun/mainrun/wandb" ]; then
-            sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/wandb
-            echo "Deleted wandb logs"
-          else
-            echo "No wandb folder found"
-          fi
+    # steps:
+    #   - name: Remove WandB logs
+    #     run: |
+    #       if [ -d "/home/labadmin/Documents/mainrun/mainrun/wandb" ]; then
+    #         sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/wandb
+    #         echo "Deleted wandb logs"
+    #       else
+    #         echo "No wandb folder found"
+    #       fi
 
-      - name: Remove __pyacahe__ logs
-        run: |
-          if [ -d "/home/labadmin/Documents/mainrun/mainrun/__pycache__" ]; then
-            sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/__pycache__
-            echo "Deleted __pycache__ logs"
-          else
-            echo "No __pycache__ folder found"
-          fi
+    #   - name: Remove __pyacahe__ logs
+    #     run: |
+    #       if [ -d "/home/labadmin/Documents/mainrun/mainrun/__pycache__" ]; then
+    #         sudo rm -rf /home/labadmin/Documents/mainrun/mainrun/__pycache__
+    #         echo "Deleted __pycache__ logs"
+    #       else
+    #         echo "No __pycache__ folder found"
+    #       fi
       
-      - name: Commit and push changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # PAT stored as a secret
-        run: |
-          cd /home/labadmin/Documents/mainrun
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull
-          git add ./mainrun/logs
-          git commit -m "Auto-commit: Update model after training" || echo "No changes to commit"
-          git remote set-url origin https://tedasfd:${GITHUB_TOKEN}@github.com/tedasdf/mainrun.git
-          git push origin main
+    #   - name: Commit and push changes
+    #     env:
+    #       GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # PAT stored as a secret
+    #     run: |
+    #       cd /home/labadmin/Documents/mainrun
+    #       git config user.name "github-actions[bot]"
+    #       git config user.email "github-actions[bot]@users.noreply.github.com"
+    #       git pull
+    #       git add ./mainrun/logs
+    #       git commit -m "Auto-commit: Update model after training" || echo "No changes to commit"
+    #       git remote set-url origin https://tedasfd:${GITHUB_TOKEN}@github.com/tedasdf/mainrun.git
+    #       git push origin main
