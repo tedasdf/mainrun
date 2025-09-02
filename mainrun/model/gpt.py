@@ -84,17 +84,13 @@ class GPT(nn.Module):
         self.ln_f      = nn.LayerNorm(cfg.d_model)
         self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 
-        self.apply(lambda m: GPT._init_weights(m, cfg.activation_function))
+        self.apply(self._init_weights)
         self.head.weight = self.token_emb.weight
 
     @staticmethod
-    def _init_weights(module, activation_function):
+    def _init_weights(module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            if activation_function == "gelu":
-                # He initialization for GELU
-                nn.init.kaiming_normal_(module.weight, mode="fan_in", nonlinearity="relu")  # GELU approximates ReLU
-            else:
-                nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
             if isinstance(module, nn.Linear) and module.bias is not None:
                 nn.init.zeros_(module.bias)
 

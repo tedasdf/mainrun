@@ -106,11 +106,11 @@ def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
     
-    # wandb.init(
-    #     project="gpt-from-scratch", 
-    #     entity="arc_agi", 
-    #     config=hparams   # <--- pass hyperparams to W&B
-    # )
+    wandb.init(
+        project="gpt-from-scratch", 
+        entity="arc_agi", 
+        config=hparams   # <--- pass hyperparams to W&B
+    )
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
@@ -162,9 +162,10 @@ def main(cfg):
                 block_size=args.context_length,
                 dropout=args.dropout
             ),
-            output_dim=args.vocab_size,
+            output_dim=args.d_model,
             norm_type='pre'  # or 'post'
         )
+
         model = GPT(cfg).to(device)
     elif args.model_arhitecture == "bottleneck_gpt":
         from model.bottleneck import GPUnetT, BottleneckGPTConfig
@@ -277,11 +278,11 @@ if __name__ == "__main__":
         from dotenv import load_dotenv
         load_dotenv(dotenv_path=".env")  # or just load_dotenv() if .env is in root
 
-        # # Access your W&B API key
-        # api_key = os.getenv("WANDB_API_KEY")
+        # Access your W&B API key
+        api_key = os.getenv("WANDB_API_KEY")
 
-        # # Log in programmatically
-        # wandb.login(key=api_key)
+        # Log in programmatically
+        wandb.login(key=api_key)
 
         import argparse
         parser = argparse.ArgumentParser()
