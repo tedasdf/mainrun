@@ -1,5 +1,11 @@
 
-from model.attention.attention import CausalSelfAttention, FixedSparseCausalSelfAttention
+from model.attention.attention import (
+    AttnConfig, 
+    CausalSelfAttention,
+    SparseAttnConfig,
+    SparseCausalSelfAttention,
+    BottleneckAttnConfig,
+    CausalBottleneckAttn)
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -8,41 +14,69 @@ from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from dataclasses import dataclass
 from dataclasses import dataclass
 
+@dataclass
+class ModelConfig:
+    vocab_size: int
+    context_length: int
+    batch_size: int
+    embed_dim: int
+    dropout: float
+    n_layers: int
+
+
+
+@dataclass
+class BlockConfig:
+    attn_config : AttnConfig
+    output_dim : int
+    norm_type: str  # 'pre' or 'post'
 
 @dataclass
 class GPTConfig:
     vocab_size: int
     block_size: int
     n_layer: int
-    n_head: int
     d_model: int
     dropout: float
-    bottleneck_dim: int = None  # default to 0 for no bottleneck
-    
+    attn_config : AttnConfig
+    output_dim : int
+    norm_type: str  # 'pre' or 'post'
+    activation_function: str = 'gelu'  # 'relu' or 'gelu'
+
+
+
 class MLP(nn.Module):
-    def __init__(self, cfg: GPTConfig):
+    def __init__(self, output_dim: int, dropout: float):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(cfg.d_model, 4 * cfg.d_model),
+            nn.Linear(output_dim, 4 * output_dim),
             nn.GELU(),
-            nn.Linear(4 * cfg.d_model, cfg.d_model),
-            nn.Dropout(cfg.dropout),
+            nn.Linear(4 * output_dim, output_dim),
+            nn.Dropout(dropout),
         )
     def forward(self, x): return self.net(x)
 
 class Block(nn.Module):
-    def __init__(self, cfg: GPTConfig):
+    def __init__(self, attn_cfg: GPTConfig, output_dim: int, norm_type: str):
         super().__init__()
-        self.ln1 = nn.LayerNorm(cfg.d_model)
-        self.ln2 = nn.LayerNorm(cfg.d_model)
-
-        self.attn = CausalSelfAttention(cfg)
-        # self.attn = FixedSparseCausalSelfAttention(cfg)
+        self.ln1 = nn.LayerNorm(output_dim)
+        self.ln2 = nn.LayerNorm(output_dim)
+        if isinstance(cfg.attn_config, AttnConfig):
+            self.attn = CausalSelfAttention(attn_cfg)
+        elif isinstance(cfg.attn_config, SparseAttnConfig):
+             self.attn = SparseCausalSelfAttention(attn_cfg)
+        elif isinstance(cfg.attn_config, BottleneckAttnConfig):
+            self.attn = CausalBottleneckAttn(attn_cfg)
+        else:
+            raise ValueError("Unsupported attention configuration")
+        
+        self.norm_type = norm_type
         self.mlp  = MLP(cfg)
     def forward(self, x):
         x = x + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
         return x
+    
 
 class GPT(nn.Module):
     def __init__(self, cfg: GPTConfig):
@@ -51,17 +85,21 @@ class GPT(nn.Module):
         self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
         self.pos_emb   = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
         self.drop      = nn.Dropout(cfg.dropout)
-        self.blocks    = nn.ModuleList([Block(cfg) for _ in range(cfg.n_layer)])
+        self.blocks    = nn.ModuleList([Block(cfg.attn_config, cfg.output_dim,  cfg.norm_type, cfg.dropout) for _ in range(cfg.n_layer)])
         self.ln_f      = nn.LayerNorm(cfg.d_model)
         self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 
-        self.apply(self._init_weights)
+        self.apply(lambda m: GPT._init_weights(m, cfg.activation_function))
         self.head.weight = self.token_emb.weight
 
     @staticmethod
-    def _init_weights(module):
+    def _init_weights(module, activation_function):
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if activation_function == "gelu":
+                # He initialization for GELU
+                nn.init.kaiming_normal_(module.weight, mode="fan_in", nonlinearity="relu")  # GELU approximates ReLU
+            else:
+                nn.init.normal_(module.weight, mean=0.0, std=0.02)
             if isinstance(module, nn.Linear) and module.bias is not None:
                 nn.init.zeros_(module.bias)
 
