@@ -106,7 +106,8 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
-    
+    models = OmegaConf.to_container(cfg.model_configs['bottleneck_gpt'], resolve=True)
+
     wandb.init(
         project="gpt-from-scratch", 
         entity="arc_agi", 
@@ -115,7 +116,7 @@ def main(cfg):
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
-    print(args)
+    
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     
@@ -184,9 +185,8 @@ def main(cfg):
             ),
             hidden_layer=args.d_model,
             norm_type='pre',  # or 'post'
-            hidden_layer_list=args.bottleneck_sizes
+            hidden_layer_list=models['bottleneck_sizes']
         )
-
         model = GPUnetT(cfg).to(device)
     else:
         raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")

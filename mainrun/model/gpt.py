@@ -10,7 +10,7 @@ from model.attention.attention import (
 
 import torch
 import torch.nn as nn
-from dataclasses import dataclass
+from torch.nn import functional as F
 from dataclasses import dataclass
 
 @dataclass
@@ -39,24 +39,31 @@ class GPTConfig:
 
 
 class MLP(nn.Module):
-    def __init__(self, hidden_layer: int, dropout: float):
+    def __init__(self, output_dim: int, dropout: float):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(hidden_layer, 4 * hidden_layer),
+            nn.Linear(output_dim, 4 * output_dim),
             nn.GELU(),
-            nn.Linear(4 * hidden_layer, hidden_layer),
+            nn.Linear(4 * output_dim, output_dim),
             nn.Dropout(dropout),
         )
-    def forward(self, x): return self.net(x)
+    def forward(self, x): return self.net(x) 
 
 class Block(nn.Module):
-    def __init__(self, attn_cfg: GPTConfig, hidden_layer: int, norm_type: str, dropout: float):
+    def __init__(self, attn_cfg: GPTConfig, hidden_layer: int, norm_type: str, dropout: float, output_dim: int = None):
         super().__init__()
-        self.ln1 = nn.LayerNorm(hidden_layer)
-        self.ln2 = nn.LayerNorm(hidden_layer)
+        
+        if output_dim == None:
+            output_dim = hidden_layer
+        else:
+            attn_cfg.d_model = hidden_layer 
+            self.residual_proj = nn.Linear(hidden_layer, output_dim) if hidden_layer != output_dim else nn.Identity()
 
+        self.ln1 = nn.LayerNorm(hidden_layer)
+        self.ln2 = nn.LayerNorm(output_dim)
+        
         if isinstance(attn_cfg, AttnConfig):
-            self.attn = CausalSelfAttention(attn_cfg)
+            self.attn = CausalSelfAttention(attn_cfg, output_dim)
         elif isinstance(attn_cfg, SparseAttnConfig):
              self.attn = SparseCausalSelfAttention(attn_cfg)
         elif isinstance(attn_cfg, BottleneckAttnConfig):
@@ -65,9 +72,12 @@ class Block(nn.Module):
             raise ValueError("Unsupported attention configuration")
         
         self.norm_type = norm_type
-        self.mlp  = MLP(hidden_layer , dropout)
+        self.mlp  = MLP( output_dim , dropout)
+        
+            
     def forward(self, x):
-        x = x + self.attn(self.ln1(x))
+        res = self.residual_proj(x)
+        x = res + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
         return x
     
@@ -79,7 +89,13 @@ class GPT(nn.Module):
         self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
         self.pos_emb   = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
         self.drop      = nn.Dropout(cfg.dropout)
-        self.blocks    = nn.ModuleList([Block(cfg.attn_config, cfg.hidden_layer,  cfg.norm_type, cfg.dropout) for _ in range(cfg.n_layer)])
+        self.blocks    = nn.ModuleList([
+            Block(
+                cfg.attn_config, 
+                cfg.hidden_layer,  
+                cfg.norm_type, 
+                cfg.dropout
+            ) for _ in range(cfg.n_layer)])
         self.ln_f      = nn.LayerNorm(cfg.d_model)
         self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 

@@ -8,7 +8,7 @@ from typing import List
 
 @dataclass
 class BottleneckGPTConfig(GPTConfig):
-    hidden_layer_list: List[int]
+    hidden_layer_list: List[int] = None
     
 
 
@@ -21,14 +21,16 @@ class GPUnetT(nn.Module):
         self.drop = nn.Dropout(cfg.dropout)
         
         self.blocks = nn.ModuleList([])
-
+        hidden_layer_list =  cfg.hidden_layer_list + [cfg.d_model]
+        
         for i in range(cfg.n_layer):
             self.blocks.append(
                 Block(
                     cfg.attn_config, 
-                    cfg.hidden_layer_list[i],  
+                    hidden_layer_list[i],  
                     cfg.norm_type, 
-                    cfg.dropout
+                    cfg.dropout,
+                    hidden_layer_list[i+1]
                 )
             )
 
@@ -51,6 +53,7 @@ class GPUnetT(nn.Module):
         tok = self.token_emb(idx)
         pos = self.pos_emb[:, :T, :]
         x = self.drop(tok + pos)
+        i = 0 
         for block in self.blocks: x = block(x)
         x = self.ln_f(x)
         logits = self.head(x)

@@ -44,7 +44,7 @@ model_configs:
     n_head: 8
     n_layer: 6
     dropout: 0.1
-    bottleneck_sizes: [512, 256, 256, 128, 128, 64]
+    bottleneck_sizes: [512, 256, 256, 128, 128, 512]
 
 
 
