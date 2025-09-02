@@ -5,12 +5,6 @@ from dataclasses import dataclass
 import numpy as np
 import math
 
-@dataclass
-class BaseModelConfig:
-    d_model: int
-    n_head: int
-    n_layer: int
-    dropout: float
 
 
 @dataclass
@@ -178,28 +172,28 @@ class SparseCausalSelfAttention(CausalSelfAttention):
                         layout[q_idx, k_idx] = 1
         return layout
 
-if __name__ == "__main__":
-    import torch
+# if __name__ == "__main__":
+#     import torch
 
-    # Example configuration
-    cfg = AttnConfig(
-        d_model=64,       # embedding dimension
-        n_head=4,         # number of attention heads
-        block_size=16,    # sequence length
-        dropout=0.1,
-        bottleneck_dim=32 # only for bottleneck
-    )
+#     # Example configuration
+#     cfg = AttnConfig(
+#         d_model=64,       # embedding dimension
+#         n_head=4,         # number of attention heads
+#         block_size=16,    # sequence length
+#         dropout=0.1,
+#         bottleneck_dim=32 # only for bottleneck
+#     )
 
-    # Dummy input: batch_size=2, seq_len=16, embedding=d_model
-    x = torch.randn(2, cfg.block_size, cfg.d_model)
+#     # Dummy input: batch_size=2, seq_len=16, embedding=d_model
+#     x = torch.randn(2, cfg.block_size, cfg.d_model)
 
-    # Test CausalSelfAttention
-    attn = CausalSelfAttention(cfg)
-    out = attn(x)
-    print("CausalSelfAttention output shape:", out.shape)  # should be [2, 16, 64]
+#     # Test CausalSelfAttention
+#     attn = CausalSelfAttention(cfg)
+#     out = attn(x)
+#     print("CausalSelfAttention output shape:", out.shape)  # should be [2, 16, 64]
 
-    # Test CausalBottleneck
-    bottleneck_attn = CausalBottleneck(cfg)
-    out_bottleneck = bottleneck_attn(x)
-    print("CausalBottleneck output shape:", out_bottleneck.shape)  # should also be [2, 16, 64]
+#     # Test CausalBottleneck
+#     bottleneck_attn = CausalBottleneck(cfg)
+#     out_bottleneck = bottleneck_attn(x)
+#     print("CausalBottleneck output shape:", out_bottleneck.shape)  # should also be [2, 16, 64]
 

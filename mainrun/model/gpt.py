@@ -26,12 +26,6 @@ class ModelConfig:
 
 
 @dataclass
-class BlockConfig:
-    attn_config : AttnConfig
-    output_dim : int
-    norm_type: str  # 'pre' or 'post'
-
-@dataclass
 class GPTConfig:
     vocab_size: int
     block_size: int
@@ -57,21 +51,22 @@ class MLP(nn.Module):
     def forward(self, x): return self.net(x)
 
 class Block(nn.Module):
-    def __init__(self, attn_cfg: GPTConfig, output_dim: int, norm_type: str):
+    def __init__(self, attn_cfg: GPTConfig, output_dim: int, norm_type: str, dropout: float):
         super().__init__()
         self.ln1 = nn.LayerNorm(output_dim)
         self.ln2 = nn.LayerNorm(output_dim)
-        if isinstance(cfg.attn_config, AttnConfig):
+
+        if isinstance(attn_cfg, AttnConfig):
             self.attn = CausalSelfAttention(attn_cfg)
-        elif isinstance(cfg.attn_config, SparseAttnConfig):
+        elif isinstance(attn_cfg, SparseAttnConfig):
              self.attn = SparseCausalSelfAttention(attn_cfg)
-        elif isinstance(cfg.attn_config, BottleneckAttnConfig):
+        elif isinstance(attn_cfg, BottleneckAttnConfig):
             self.attn = CausalBottleneckAttn(attn_cfg)
         else:
             raise ValueError("Unsupported attention configuration")
         
         self.norm_type = norm_type
-        self.mlp  = MLP(cfg)
+        self.mlp  = MLP(output_dim , dropout)
     def forward(self, x):
         x = x + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))

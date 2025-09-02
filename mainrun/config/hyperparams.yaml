@@ -7,15 +7,15 @@ hyperparams:
   val_frac: 0.10
   num_titles: 100000
   vocab_size: 16000 # Vocabulary size of the tokenizer
+  context_length: 128
   ##############################################
   # CHANGEABLE hyperparameters
   ##############################################
-  model_arhitecture: "bottleneck_gpt" # gpt, bottleneck_gpt, unet_gpt
+  model_arhitecture: "gpt" # gpt, bottleneck_gpt, unet_gpt
   log_file: "./logs/mainrun.log"
   ###############################################
   # MODEL hyperparameters (also in model.yaml)
   ###############################################
-  block_size: 128
   batch_size: 64
   n_layer: 6
   n_head: 8
@@ -23,12 +23,13 @@ hyperparams:
   dropout: 0.1
   bottleneck_size: 256  # Set to 0 for no bottleneck, >0 for bottleneck size
   ###############################################
-  # TRaining hyperparameters
+  # Training hyperparameters
   ###############################################
   lr: 0.006
   weight_decay: 0.0
+  scheduler: "cosine" # none, linear, cosine
+  optimizer: "sgd" 
   evals_per_epoch: 3
-  optimizer: "sgd"
 
 
 

@@ -1,6 +1,7 @@
 from model.gpt import GPT, GPTConfig
+from model.attention.attention import AttnConfig
 from model.tokenizer.BPETokenizer import BPETokenizer
-import utils
+# import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -105,11 +106,11 @@ def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
     
-    wandb.init(
-        project="gpt-from-scratch", 
-        entity="arc_agi", 
-        config=hparams   # <--- pass hyperparams to W&B
-    )
+    # wandb.init(
+    #     project="gpt-from-scratch", 
+    #     entity="arc_agi", 
+    #     config=hparams   # <--- pass hyperparams to W&B
+    # )
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
@@ -135,7 +136,7 @@ def main(cfg):
     train_ids = torch.tensor(tok.encode(train_text), dtype=torch.long)
     val_ids = torch.tensor(tok.encode(val_text), dtype=torch.long)
     
-    batches = len(train_ids) // (args.block_size * args.batch_size)
+    batches = len(train_ids) // (args.context_length * args.batch_size)
     max_steps = args.epochs * batches
     eval_interval = batches // args.evals_per_epoch
     logger.log("dataset_info",
@@ -144,34 +145,39 @@ def main(cfg):
                batches_per_epoch=batches,
                tokens_per_epoch=len(train_ids),
                vocab_size=tok.vocab_size)
+    
+    
+
+    #### Model setup
     if args.model_arhitecture == "gpt":
         cfg = GPTConfig(
-            vocab_size = tok.vocab_size,
-            block_size = args.block_size,
-            n_layer    = args.n_layer,
-            n_head     = args.n_head,
-            d_model    = args.d_model,
-            dropout    = args.dropout,
-            bottleneck_dim = args.bottleneck_size if args.bottleneck_size > 0 else None
+            vocab_size=args.vocab_size,
+            block_size=args.context_length,
+            n_layer=args.n_layer,
+            d_model=args.d_model,
+            dropout=args.dropout,
+            attn_config = AttnConfig(
+                d_model=args.d_model,
+                n_head=args.n_head,
+                block_size=args.context_length,
+                dropout=args.dropout
+            ),
+            output_dim=args.vocab_size,
+            norm_type='pre'  # or 'post'
         )
         model = GPT(cfg).to(device)
     elif args.model_arhitecture == "bottleneck_gpt":
         from model.bottleneck import GPUnetT, BottleneckGPTConfig
-        cfg = BottleneckGPTConfig(
-            vocab_size = tok.vocab_size,
-            block_size = args.block_size,
-            n_layer    = args.n_layer,
-            n_head     = args.n_head,
-            d_model    = args.d_model,
-            dropout    = args.dropout,
-            bottleneck_size = [args.bottleneck_size] * args.n_layer if args.bottleneck_size > 0 else [args.d_model] * args.n_layer
-        )
+        cfg = BottleneckGPTConfig(**args)
         model = GPUnetT(cfg).to(device)
     else:
         raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")
-        
+    
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.log("model_info", parameters_count=model_params)
+
+
+    ### Optimizer and Scheduler
     if args.optimizer == "sgd":
         opt = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optimizer == "adamw":
@@ -182,7 +188,18 @@ def main(cfg):
         opt = torch.optim.Adagrad(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
         raise ValueError(f"Unsupported optimizer: {args.optimizer}")
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max_steps)
+    
+    if args.scheduler == "cosine":
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max_steps)
+    elif args.scheduler == "linear":
+        scheduler = torch.optim.lr_scheduler.LinearLR(opt, start_factor=1.0, end_factor=0.0, total_iters=max_steps)
+    elif args.scheduler == "step":
+        scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=args.step_size, gamma=args.gamma)
+    elif args.scheduler == "none":
+        scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda step: 1.0)
+    else:
+        raise ValueError(f"Unsupported scheduler: {args.scheduler}")
+    
 
     def evaluate():
         model.eval()
@@ -202,7 +219,7 @@ def main(cfg):
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
             step += 1
-            xb, yb, ptr = get_batch(train_ids, ptr, args.block_size, args.batch_size, device)
+            xb, yb, ptr = get_batch(train_ids, ptr, args.context_length, args.batch_size, device)
             _, loss = model(xb, yb)
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -260,15 +277,15 @@ if __name__ == "__main__":
         from dotenv import load_dotenv
         load_dotenv(dotenv_path=".env")  # or just load_dotenv() if .env is in root
 
-        # Access your W&B API key
-        api_key = os.getenv("WANDB_API_KEY")
+        # # Access your W&B API key
+        # api_key = os.getenv("WANDB_API_KEY")
 
-        # Log in programmatically
-        wandb.login(key=api_key)
+        # # Log in programmatically
+        # wandb.login(key=api_key)
 
         import argparse
         parser = argparse.ArgumentParser()
-        parser.add_argument("--block_size", type=int, default=128)
+        parser.add_argument("--context_length", type=int, default=128)
         parser.add_argument("--lr", type=float, default=0.006)
         parser.add_argument("--n_layer", type=int, default=6)
         parser.add_argument("--dropout", type=float, default=0.1)
@@ -287,7 +304,7 @@ if __name__ == "__main__":
         else:
             cfg = OmegaConf.load("config/hyperparams.yaml")
             # Update cfg with args
-            OmegaConf.update(cfg, "hyperparams.block_size", args.block_size)
+            OmegaConf.update(cfg, "hyperparams.context_length", args.context_length)
             OmegaConf.update(cfg, "hyperparams.lr", args.lr)
             OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
             OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
