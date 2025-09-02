@@ -1,0 +1,31 @@
+program: train.py
+method: grid   # or grid, or bayes
+metric:
+  name: val/loss
+  goal: minimize
+
+parameters:
+  model_arhitecture:
+    value: bottleneck_gpt
+
+  # Bottleneck sizes to try (sequence per layer)
+  bottleneck_sizes:
+    values:
+      - [512, 512, 512, 512, 512, 512]   # no bottleneck
+      - [512, 256, 256, 128, 128, 256]   # progressive down
+      - [512, 384, 256, 256, 384, 512]   # symmetric
+      - [256, 256, 128, 128, 256, 256]   # more compressed
+
+  # Training params to sweep
+  lr:
+    values: [ 0.012 , 0.01, 0.007 ,  0.005]
+  optimizer:
+    values: ["sgd", "adamw", "adagrad"]
+  batch_size:
+    values: [128, 256]
+  dropout:
+    values: [0.1, 0.2, 0.3]
+  weight_decay:
+    values: [0.0, 0.01, 0.1]
+
+
