@@ -206,7 +206,7 @@ def main(cfg):
         model.eval()
         losses = 0.0
         with torch.no_grad():
-            for xb, yb in iter_full_split(val_ids, args.block_size, args.batch_size, device):
+            for xb, yb in iter_full_split(val_ids, args.context_length, args.batch_size, device):
                 logits, _ = model(xb, yb)
                 B, T, V = logits.size()
                 loss = F.cross_entropy(logits.view(-1, V), yb.view(-1), reduction='sum')
