@@ -40,14 +40,17 @@ model_configs:
     n_layer: 6
     dropout: 0.1
   bottleneck_gpt:
-  #   d_model: 512
-  #   n_head: 8
-  #   n_layer: 6
-  #   dropout: 0.1
-  #   bottleneck_size: 256
-  # unet_gpt:
     d_model: 512
     n_head: 8
     n_layer: 6
     dropout: 0.1
     bottleneck_sizes: [512, 256, 256, 128, 128, 64]
+
+
+
+      #   UNET d_model: 512
+  #   n_head: 8
+  #   n_layer: 6
+  #   dropout: 0.1
+  #   bottleneck_size: 256
+  # unet_gpt:
