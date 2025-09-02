@@ -1,5 +1,5 @@
 
-from mainrun.model.attention.attention import CausalSelfAttention
+from model.attention.attention import CausalSelfAttention, FixedSparseCausalSelfAttention
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -35,7 +35,9 @@ class Block(nn.Module):
         super().__init__()
         self.ln1 = nn.LayerNorm(cfg.d_model)
         self.ln2 = nn.LayerNorm(cfg.d_model)
+
         self.attn = CausalSelfAttention(cfg)
+        # self.attn = FixedSparseCausalSelfAttention(cfg)
         self.mlp  = MLP(cfg)
     def forward(self, x):
         x = x + self.attn(self.ln1(x))
