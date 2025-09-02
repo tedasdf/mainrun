@@ -36,7 +36,7 @@ class SparseAttnConfig(AttnConfig):
 
 
 class CausalSelfAttention(nn.Module):
-    def __init__(self, cfg: GPTConfig):
+    def __init__(self, cfg: AttnConfig):
         super().__init__()
         assert cfg.d_model % cfg.n_head == 0
         self.head_dim = cfg.d_model // cfg.n_head
@@ -60,7 +60,7 @@ class CausalSelfAttention(nn.Module):
         y = y.transpose(1, 2).contiguous().view(B, T, self.intermediate_dim)
         return self.resid_drop(self.proj(y))
 
-class CausalBottleneck(CausalSelfAttention):
+class CausalBottleneckAttn(CausalSelfAttention):
     def __init__(self, cfg):
         super().__init__(cfg)  # init parent first
 
@@ -73,7 +73,7 @@ class CausalBottleneck(CausalSelfAttention):
         self.qkv = nn.Linear(cfg.d_model, 3 * self.intermediate_dim)
         self.proj = nn.Linear(self.intermediate_dim, cfg.d_model)
 
-class sparseCausalSelfAttention(CausalSelfAttention):
+class SparseCausalSelfAttention(CausalSelfAttention):
     def __init__(self, cfg, n_ctx):
         super().__init__(cfg)
         self.attn_type = cfg.type
