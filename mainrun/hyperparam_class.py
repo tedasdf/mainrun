@@ -11,7 +11,7 @@ class Hyperparameters:
     context_length: int  # Added context_length parameter
 
     log_file: str
-    model_arhitecture: str
+    model_architecture: str 
     
     batch_size: int
     n_layer: int
@@ -20,7 +20,6 @@ class Hyperparameters:
     dropout: float
     bottleneck_size: int  # Set to 0 for no bottleneck, >0 for bottleneck size
     attention_layer: str
-    scheduler: str  # e.g., 'none', 'linear', 'cosine'
 
     lr: float
     weight_decay: float

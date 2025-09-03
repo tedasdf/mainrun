@@ -6,7 +6,7 @@ from model.attention.attention import (
 )
 from model.tokenizer.BPETokenizer import BPETokenizer
 from model.bottleneck import GPUnetT, BottleneckGPTConfig
-# import utils
+import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -110,7 +110,7 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 def main(cfg):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
-    models = OmegaConf.to_container(cfg.model_configs['bottleneck_gpt'], resolve=True)
+    models = OmegaConf.to_container(cfg.model_configs[hparams['model_architecture']], resolve=True)
 
     wandb.init(
         project="gpt-from-scratch", 
@@ -119,6 +119,7 @@ def main(cfg):
     )
 
     # Map into dataclass for your code
+    
     args = Hyperparameters(**hparams)
     
     torch.manual_seed(args.seed)
@@ -161,19 +162,27 @@ def main(cfg):
                 block_size=args.context_length,
                 dropout=args.dropout
             )
-    elif args.attention_layer == '':
+    elif args.attention_layer == 'bottleneck':
         attn = CausalBottleneckAttn(
                 d_model=args.d_model,
                 n_head=args.n_head,
                 block_size=args.context_length,
                 dropout=args.dropout,
                 bottleneck_dim=args.bottleneck_size
-            )
+        )
+    elif args.attention_layer == 'sparse':
+        attn = SparseCausalSelfAttention(
+            d_model=args.d_model,
+            n_head=args.n_head,
+            block_size=args.context_length,
+            dropout=args.dropout,
+            bottleneck_dim=args.bottleneck_size
+        )
         
 
 
     #### Model setup
-    if args.model_arhitecture == "gpt":
+    if args.model_architecture == "gpt":
         cfg = GPTConfig(
             vocab_size=args.vocab_size,
             block_size=args.context_length,
@@ -186,7 +195,7 @@ def main(cfg):
         )
 
         model = GPT(cfg).to(device)
-    elif args.model_arhitecture == "bottleneck_gpt":
+    elif args.model_architecture == "bottleneck_gpt":
         
         cfg = BottleneckGPTConfig(
             vocab_size=args.vocab_size,
@@ -196,7 +205,6 @@ def main(cfg):
             dropout=args.dropout,
             attn_config = attn,
             hidden_layer=args.d_model,
-            norm_type='pre',  # or 'post'
             hidden_layer_list=models['bottleneck_sizes']
         )
         model = GPUnetT(cfg).to(device)
@@ -204,7 +212,8 @@ def main(cfg):
         raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")
     
 
-    model_dict = vars(cfg)    
+    model_dict = vars(cfg).copy()
+    model_dict['attn_config'] = vars(cfg.attn_config)
     logger.log("model_configured", **model_dict)
 
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -330,6 +339,7 @@ if __name__ == "__main__":
         parser.add_argument("--optimizer", type=str, default="sgd")
         parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
         parser.add_argument("--model_arhitecture", type=str, default="gpt")
+        parser.add_argument("--scheduler",type=str, default="cosine")
         # Important: match sweep key
         parser.add_argument(
             "--bottleneck_sizes",
@@ -352,6 +362,8 @@ if __name__ == "__main__":
             OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
             OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
             OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
+            OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
+            
             main(cfg)
             
     finally:

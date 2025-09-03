@@ -36,6 +36,7 @@ class GPTConfig:
     norm_type: str  # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
     init_method: str = 'xavier'
+    norm_type: str ='pre'
 
 
 
@@ -60,8 +61,6 @@ class Block(nn.Module):
             attn_cfg.d_model = hidden_layer 
             self.residual_proj = nn.Linear(hidden_layer, output_dim) if hidden_layer != output_dim else nn.Identity()
 
-        self.ln1 = nn.LayerNorm(hidden_layer)
-        self.ln2 = nn.LayerNorm(output_dim)
         
         if isinstance(attn_cfg, AttnConfig):
             self.attn = CausalSelfAttention(attn_cfg, output_dim)
@@ -74,12 +73,20 @@ class Block(nn.Module):
         
         self.norm_type = norm_type
         self.mlp  = MLP( output_dim , dropout)
+
+        
+        self.ln1 = nn.LayerNorm(hidden_layer)
+        self.ln2 = nn.LayerNorm(output_dim)
         
             
     def forward(self, x):
         res = self.residual_proj(x)
-        x = res + self.attn(self.ln1(x))
-        x = x + self.mlp(self.ln2(x))
+        if self.norm_type == 'pre':
+            x = res + self.attn(self.ln1(x))
+            x = x + self.mlp(self.ln2(x))
+        elif self.norm_type == 'post':
+            x = self.ln1(res + self.attn(x))
+            x = self.ln2(x + self.mlp(x))
         return x
     
 
@@ -100,24 +107,24 @@ class GPT(nn.Module):
         self.ln_f      = nn.LayerNorm(cfg.d_model)
         self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 
-        self.apply(self._init_weights)
+        self.apply(lambda m: self._init_weights(m, self.cfg))
         self.head.weight = self.token_emb.weight
 
     @staticmethod
-    def _init_weights(self, module):
+    def _init_weights(module, cfg):
         """Initialize weights based on cfg.init_method."""
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            if self.cfg.init_method == "normal":
+            if cfg.init_method == "normal":
                 nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            elif self.cfg.init_method == "xavier":
+            elif cfg.init_method == "xavier":
                 nn.init.xavier_normal_(module.weight)
-            elif self.cfg.init_method == "kaiming":
+            elif cfg.init_method == "kaiming":
                 nn.init.kaiming_normal_(module.weight, mode='fan_in', nonlinearity='relu')
-            elif self.cfg.init_method == "uniform":
-                bound = 1.0 / (self.cfg.d_model ** 0.5)  # Scaled by sqrt(d_model)
+            elif cfg.init_method == "uniform":
+                bound = 1.0 / (cfg.d_model ** 0.5)  # Scaled by sqrt(d_model)
                 nn.init.uniform_(module.weight, -bound, bound)
             else:
-                raise ValueError(f"Unknown init_method: {self.cfg.init_method}")
+                raise ValueError(f"Unknown init_method: {cfg.init_method}")
             
             if isinstance(module, nn.Linear) and module.bias is not None:
                 nn.init.zeros_(module.bias)

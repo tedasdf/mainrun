@@ -1,0 +1,25 @@
+program: train.py
+method: random   # or grid, or bayes
+metric:
+  name: val/loss
+  goal: minimize
+parameters:
+  lr:
+    values: [ 0.012 , 0.01, 0.007 ,  0.005]
+  batch_size:
+    values: [128]
+  block_size:
+    values: [256 , 512]
+  optimizer:
+    values: ["sgd", "adamw", "adam", "adagrad"]
+  dropout:
+    values: [0.1, 0.2, 0.3]
+  weight_decay:
+    values: [0.0, 0.01, 0.1]
+  d_model:
+    values: [ 128, 256, 512 , 1024]
+  n_layer:
+    values: [ 6, 8, 10 , 12]
+
+  scheduler:
+    values: ['cosine', 'linear', 'step' , 'none']
