@@ -338,7 +338,7 @@ if __name__ == "__main__":
         parser.add_argument("--batch_size", type=int, default=64)
         parser.add_argument("--bottleneck_size", type=int, default=256)
         parser.add_argument("--optimizer", type=str, default="sgd")
-        parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
+        parser.add_argument("--no-sweep", action="store_true", default=True, help="Run hyperparameter sweep")
         parser.add_argument("--model_arhitecture", type=str, default="gpt")
         parser.add_argument("--scheduler",type=str, default="cosine")    
         # Important: match sweep key    
@@ -351,7 +351,7 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
         if args.sweep:
-            sweep_id = wandb.sweep("sweep.yaml", project="gpt-from-scratch", entity="arc_agi")
+            sweep_id = wandb.sweep(".\config\sweep_gpt.yaml", project="gpt-from-scratch", entity="arc_agi")
             wandb.agent(sweep_id, function=sweep_train)
         else:
             cfg = OmegaConf.load("config/hyperparams.yaml")
@@ -364,7 +364,7 @@ if __name__ == "__main__":
             OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
             OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
             OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
-            
+            OmegaConf.update(cfg, "hyperparams.optimizer", args.optimizer)
             main(cfg)
             
     finally:
