@@ -59,7 +59,9 @@ class Block(nn.Module):
             output_dim = hidden_layer
         else:
             attn_cfg.d_model = hidden_layer 
-            self.residual_proj = nn.Linear(hidden_layer, output_dim) if hidden_layer != output_dim else nn.Identity()
+        
+        
+        self.residual_proj = nn.Linear(hidden_layer, output_dim) if hidden_layer != output_dim else nn.Identity()
 
         
         if isinstance(attn_cfg, AttnConfig):
