@@ -108,7 +108,7 @@
 
 
 
-echo "Running training script with specified hyperparameters..."
-python3 train.py --batch_size=128 --dropout=0.1 --lr=0.012 --model_arhitecture=gpt --optimizer=sgd --weight_decay=0.01
+# echo "Running training script with specified hyperparameters..."
+# python3 train.py --batch_size=128 --dropout=0.1 --lr=0.012 --model_arhitecture=gpt --optimizer=sgd --weight_decay=0.01
 
-# wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}
+wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}

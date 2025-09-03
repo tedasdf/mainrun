@@ -191,7 +191,8 @@ def main(cfg):
             dropout=args.dropout,
             attn_config = attn,
             hidden_layer=args.d_model,
-            norm_type='pre'  # or 'post'
+            activation_function = 'gelu',  # 'relu' or 'gelu'
+            init_method = 'xavier'
         )
 
         model = GPT(cfg).to(device)
@@ -339,8 +340,8 @@ if __name__ == "__main__":
         parser.add_argument("--optimizer", type=str, default="sgd")
         parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
         parser.add_argument("--model_arhitecture", type=str, default="gpt")
-        parser.add_argument("--scheduler",type=str, default="cosine")
-        # Important: match sweep key
+        parser.add_argument("--scheduler",type=str, default="cosine")    
+        # Important: match sweep key    
         parser.add_argument(
             "--bottleneck_sizes",
             type=lambda s: [int(x) for x in s.strip("[]").replace(",", " ").split()],

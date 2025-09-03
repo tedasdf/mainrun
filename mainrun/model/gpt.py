@@ -33,10 +33,10 @@ class GPTConfig:
     dropout: float
     attn_config : AttnConfig
     hidden_layer : int
-    norm_type: str  # 'pre' or 'post'
+    norm_type: str  = 'pre' # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
     init_method: str = 'xavier'
-    norm_type: str ='pre'
+
 
 
 
