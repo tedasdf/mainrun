@@ -2,7 +2,7 @@ from model.gpt import GPT, GPTConfig
 from model.attention.attention import AttnConfig
 from model.tokenizer.BPETokenizer import BPETokenizer
 from model.bottleneck import GPUnetT, BottleneckGPTConfig
-import utils
+# import utils
 import math, random, time
 from dataclasses import dataclass
 import json
@@ -124,8 +124,9 @@ def main(cfg):
     logger = configure_logging(args.log_file)
     
     hyperparams_dict = vars(args)
-    logger.log("hyperparameters_configured", **hyperparams_dict)
     
+    logger.log("hyperparameters_configured", **hyperparams_dict)
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.log("device_info", device=device)
 
@@ -313,7 +314,14 @@ if __name__ == "__main__":
         parser.add_argument("--bottleneck_size", type=int, default=256)
         parser.add_argument("--optimizer", type=str, default="sgd")
         parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
-
+        parser.add_argument("--model_arhitecture", type=str, default="gpt")
+        # Important: match sweep key
+        parser.add_argument(
+            "--bottleneck_sizes",
+            type=lambda s: [int(x) for x in s.strip("[]").replace(",", " ").split()],
+            default=[512, 256, 256, 128, 128, 256],
+            help="List of bottleneck sizes per layer"
+        )
         args = parser.parse_args()
 
         if args.sweep:

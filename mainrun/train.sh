@@ -108,5 +108,7 @@
 
 
 
-echo "Running training script with specified hyperparameters..."
-python3 train.py
+# echo "Running training script with specified hyperparameters..."
+# python3 train.py
+
+wandb agent arc_agi/gpt-from-scratch/${SWEEP_ID}
