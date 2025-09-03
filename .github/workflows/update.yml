@@ -9,8 +9,11 @@ jobs:
   update:
     runs-on: [self-hosted, x64, linux, docker]   # your self-hosted runner
     steps:
-      - name: Pull latest code safely
+      - name: Pull latest code safely using PAT
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}  # PAT stored as secret
         run: |
-            cd /home/labadmin/Documents/mainrun
-            git fetch origin
-            git reset --hard origin/main
+          cd /home/labadmin/Documents/mainrun
+          git remote set-url origin https://$GITHUB_TOKEN@github.com/tedasdf/mainrun.git
+          git fetch origin
+          git reset --hard origin/main
