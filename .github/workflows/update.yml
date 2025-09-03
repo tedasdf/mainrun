@@ -17,4 +17,4 @@ jobs:
           git remote set-url origin https://$GITHUB_TOKEN@github.com/tedasdf/mainrun.git
           git fetch origin
           git reset --hard origin/main
-          git clean -fdx
+          git clean -fd -e .env
