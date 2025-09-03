@@ -24,7 +24,7 @@ jobs:
           --env-file /home/labadmin/Documents/mainrun/.env \
           -e WANDB_PYTHON_EXECUTABLE=/usr/bin/python3 \
           -e PYTHONPATH=/workspace/mainrun \
-          -e SWEEP_ID=${SWEEP_ID}
+          -e SWEEP_ID=${SWEEP_ID}\
           mainrun-env \
           bash -c "ln -s /usr/bin/python3 /usr/bin/python && \
                   git config --global --add safe.directory /workspace && \
