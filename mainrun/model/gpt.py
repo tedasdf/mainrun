@@ -35,6 +35,7 @@ class GPTConfig:
     hidden_layer : int
     norm_type: str  # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
+    init_method: str = 'xavier'
 
 
 
@@ -103,9 +104,21 @@ class GPT(nn.Module):
         self.head.weight = self.token_emb.weight
 
     @staticmethod
-    def _init_weights(module):
+    def _init_weights(self, module):
+        """Initialize weights based on cfg.init_method."""
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if self.cfg.init_method == "normal":
+                nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            elif self.cfg.init_method == "xavier":
+                nn.init.xavier_normal_(module.weight)
+            elif self.cfg.init_method == "kaiming":
+                nn.init.kaiming_normal_(module.weight, mode='fan_in', nonlinearity='relu')
+            elif self.cfg.init_method == "uniform":
+                bound = 1.0 / (self.cfg.d_model ** 0.5)  # Scaled by sqrt(d_model)
+                nn.init.uniform_(module.weight, -bound, bound)
+            else:
+                raise ValueError(f"Unknown init_method: {self.cfg.init_method}")
+            
             if isinstance(module, nn.Linear) and module.bias is not None:
                 nn.init.zeros_(module.bias)
 

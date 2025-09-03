@@ -22,6 +22,7 @@ hyperparams:
   d_model: 512 # Dimension of the model
   dropout: 0.1
   bottleneck_size: 256  # Set to 0 for no bottleneck, >0 for bottleneck size
+  attention_layer: 'causal'
   ###############################################
   # Training hyperparameters
   ###############################################
@@ -30,6 +31,7 @@ hyperparams:
   scheduler: "cosine" # none, linear, cosine
   optimizer: "sgd" 
   evals_per_epoch: 3
+
 
 
 

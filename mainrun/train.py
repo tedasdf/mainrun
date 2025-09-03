@@ -1,5 +1,9 @@
 from model.gpt import GPT, GPTConfig
-from model.attention.attention import AttnConfig
+from model.attention.attention import (
+    AttnConfig,
+    CausalBottleneckAttn,
+    SparseCausalSelfAttention
+)
 from model.tokenizer.BPETokenizer import BPETokenizer
 from model.bottleneck import GPUnetT, BottleneckGPTConfig
 # import utils
@@ -17,7 +21,7 @@ from tqdm import tqdm
 import structlog
 from omegaconf import OmegaConf
 from typing import Any
-from hyperparam_class import Hyperparameters
+from hyperparam_class import Hyperparameters 
 import wandb
 
 def configure_logging(log_file: str):
@@ -149,7 +153,24 @@ def main(cfg):
                tokens_per_epoch=len(train_ids),
                vocab_size=tok.vocab_size)
     
-    
+    ### Attention setup
+    if args.attention_layer == 'causal':
+        attn = AttnConfig(
+                d_model=args.d_model,
+                n_head=args.n_head,
+                block_size=args.context_length,
+                dropout=args.dropout
+            )
+    elif args.attention_layer == '':
+        attn = CausalBottleneckAttn(
+                d_model=args.d_model,
+                n_head=args.n_head,
+                block_size=args.context_length,
+                dropout=args.dropout,
+                bottleneck_dim=args.bottleneck_size
+            )
+        
+
 
     #### Model setup
     if args.model_arhitecture == "gpt":
@@ -159,12 +180,7 @@ def main(cfg):
             n_layer=args.n_layer,
             d_model=args.d_model,
             dropout=args.dropout,
-            attn_config = AttnConfig(
-                d_model=args.d_model,
-                n_head=args.n_head,
-                block_size=args.context_length,
-                dropout=args.dropout
-            ),
+            attn_config = attn,
             hidden_layer=args.d_model,
             norm_type='pre'  # or 'post'
         )
@@ -178,12 +194,7 @@ def main(cfg):
             n_layer=args.n_layer,
             d_model=args.d_model,
             dropout=args.dropout,
-            attn_config = AttnConfig(
-                d_model=args.d_model,
-                n_head=args.n_head,
-                block_size=args.context_length,
-                dropout=args.dropout
-            ),
+            attn_config = attn,
             hidden_layer=args.d_model,
             norm_type='pre',  # or 'post'
             hidden_layer_list=models['bottleneck_sizes']
@@ -192,6 +203,10 @@ def main(cfg):
     else:
         raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")
     
+
+    model_dict = vars(cfg)    
+    logger.log("model_configured", **model_dict)
+
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.log("model_info", parameters_count=model_params)
 

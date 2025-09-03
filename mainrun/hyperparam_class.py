@@ -19,7 +19,7 @@ class Hyperparameters:
     d_model: int
     dropout: float
     bottleneck_size: int  # Set to 0 for no bottleneck, >0 for bottleneck size
-    
+    attention_layer: str
     scheduler: str  # e.g., 'none', 'linear', 'cosine'
 
     lr: float
@@ -27,3 +27,7 @@ class Hyperparameters:
     scheduler: str # none, linear, cosine
     optimizer: str
     evals_per_epoch: float
+
+
+
+
