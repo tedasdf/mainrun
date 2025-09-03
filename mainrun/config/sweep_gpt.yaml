@@ -13,10 +13,10 @@ parameters:
   optimizer:
     values: ["sgd", "adamw", "adam", "adagrad"]
   dropout:
-    values: [0.1, 0.2, 0.3]
+    values: [0.1, 0.2, 0.3 , 0.4]
   weight_decay:
     values: [0.0, 0.01, 0.1]
   d_model:
-    values: [ 128, 256, 512 , 1024]
+    values: [ 128, 256, 512 ]
   n_layer:
-    values: [ 6, 8, 10 , 12]
+    values: [ 4, 6, 8, 10]
