@@ -350,7 +350,7 @@ if __name__ == "__main__":
         )
         args = parser.parse_args()
 
-        if args.sweep:
+        if args.no_sweep:
             sweep_id = wandb.sweep(".\config\sweep_gpt.yaml", project="gpt-from-scratch", entity="arc_agi")
             wandb.agent(sweep_id, function=sweep_train)
         else:
