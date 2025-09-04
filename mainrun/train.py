@@ -357,6 +357,7 @@ if __name__ == "__main__":
         parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
         parser.add_argument("--model_arhitecture", type=str, default="gpt")
         parser.add_argument("--scheduler",type=str, default="cosine")    
+        parser.add_argument("--init_method" , type=str, default="xaviuer")
         # Important: match sweep key    
         parser.add_argument(
             "--bottleneck_sizes",
@@ -382,6 +383,7 @@ if __name__ == "__main__":
             OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
             OmegaConf.update(cfg, "hyperparams.optimizer", args.optimizer)
             OmegaConf.update(cfg, "hyperparams.scheduler", args.scheduler)
+            OmegaConf.update(cfg, "hyperparams.init_method", args.init_method)
             # OmegaConf.update(cfg, "hyperparams.L1", args.L1)
             # OmegaConf.update(cfg, "hyperparams.L2", args.L2)
             main(cfg)

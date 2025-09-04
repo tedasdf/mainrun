@@ -21,8 +21,7 @@ class Hyperparameters:
     bottleneck_size: int  # Set to 0 for no bottleneck, >0 for bottleneck size
     attention_layer: str
 
-    L1 : float
-    L2 : float
+    init_method: str
     lr: float
     weight_decay: float
     scheduler: str # none, linear, cosine
