@@ -26,8 +26,6 @@ hyperparams:
   ###############################################
   # Training hyperparameters
   ###############################################
-  L1: 0.001
-  L2: 0.001
   lr: 0.005
   weight_decay: 0.1
   scheduler: "cosine" # none, linear, cosine
