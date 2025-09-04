@@ -11,25 +11,25 @@ hyperparams:
   ##############################################
   # CHANGEABLE hyperparameters
   ##############################################
-  model_architecture: "bottleneck_gpt" # gpt, bottleneck_gpt, unet_gpt
+  model_architecture: "gpt" # gpt, bottleneck_gpt, unet_gpt
   log_file: "./logs/mainrun.log"
   ###############################################
   # MODEL hyperparameters (also in model.yaml)
   ###############################################
-  batch_size: 64
+  batch_size: 32
   n_layer: 6
   n_head: 8
-  d_model: 512 # Dimension of the model
+  d_model: 128 # Dimension of the model
   dropout: 0.1
   bottleneck_size: 256  # Set to 0 for no bottleneck, >0 for bottleneck size
   attention_layer: 'causal'
   ###############################################
   # Training hyperparameters
   ###############################################
-  lr: 0.006
-  weight_decay: 0.0
+  lr: 0.005
+  weight_decay: 0.1
   scheduler: "cosine" # none, linear, cosine
-  optimizer: "sgd" 
+  optimizer: "adamw" 
   evals_per_epoch: 3
 
 
@@ -37,7 +37,7 @@ hyperparams:
 
 model_configs:
   gpt:
-    d_model: 512
+    d_model: 128
     n_head: 8
     n_layer: 6
     dropout: 0.1
