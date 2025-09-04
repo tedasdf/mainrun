@@ -267,8 +267,7 @@ def main(cfg):
     ptr = 0
     step = 0
     t0 = time.time()
-    L1 = args.L1
-    L2 = args.L2
+    
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
             step += 1
