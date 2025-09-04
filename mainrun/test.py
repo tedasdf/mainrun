@@ -150,14 +150,14 @@ def main(cfg):
     
     ### Attention setup
     if args.attention_layer == 'causal':
-        attn = AttnConfig(
+        attn_cfg = AttnConfig(
                 d_model=args.d_model,
                 n_head=args.n_head,
                 block_size=args.context_length,
                 dropout=args.dropout
             )
     elif args.attention_layer == 'bottleneck':
-        attn = BottleneckAttnConfig(
+        attn_cfg = BottleneckAttnConfig(
                 d_model=args.d_model,
                 n_head=args.n_head,
                 block_size=args.context_length,
@@ -203,7 +203,7 @@ def main(cfg):
             d_model=args.d_model,
             dropout=args.dropout,
             attn_config = attn_cfg,
-            hidden_layer=args.d_model,
+            hidden_layer=args.bottleneck_size,
             hidden_layer_list=models['bottleneck_sizes']
         )
         model = GPUnetT(cfg).to(device)

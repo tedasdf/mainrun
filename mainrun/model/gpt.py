@@ -84,13 +84,10 @@ class Block(nn.Module):
         
         self.ln1 = nn.LayerNorm(hidden_layer)
         self.ln2 = nn.LayerNorm(output_dim)
-        print("input : ", hidden_layer)
-            
-        print("output : " , output_dim)
+    
        
     def forward(self, x):
         res = self.residual_proj(x)
-        print(res.shape)
         if self.norm_type == 'pre':
             x = res + self.attn(self.ln1(x))
             x = x + self.mlp(self.ln2(x))
@@ -109,7 +106,7 @@ class GPT(nn.Module):
         self.drop      = nn.Dropout(cfg.dropout)
         self.blocks = nn.ModuleList()
         for i in range(cfg.n_layer):
-            print(f"Initializing Block {i+1}/{cfg.n_layer}")
+
             self.blocks.append(
                 Block(
                     cfg.attn_config,

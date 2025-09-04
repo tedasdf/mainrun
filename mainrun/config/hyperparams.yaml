@@ -22,16 +22,17 @@ hyperparams:
   d_model: 128 # Dimension of the model
   dropout: 0.1
   bottleneck_size: 256  # Set to 0 for no bottleneck, >0 for bottleneck size
-  attention_layer: 'causal'
+  attention_layer: 'sparse'
   ###############################################
   # Training hyperparameters
   ###############################################
+  L1: 0.001
+  L2: 0.001
   lr: 0.005
   weight_decay: 0.1
   scheduler: "cosine" # none, linear, cosine
   optimizer: "adamw" 
   evals_per_epoch: 3
-
 
 
 
@@ -41,7 +42,8 @@ model_configs:
     n_head: 8
     n_layer: 6
     dropout: 0.1
-  bottleneck_gpt:
+    init_method: 'xavier'
+  unet_gpt:
     d_model: 512
     n_head: 8
     n_layer: 6

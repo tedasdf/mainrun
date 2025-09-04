@@ -119,7 +119,6 @@ def main(cfg):
     )
 
     # Map into dataclass for your code
-    
     args = Hyperparameters(**hparams)
     
     torch.manual_seed(args.seed)
@@ -198,11 +197,11 @@ def main(cfg):
             attn_config = attn,
             hidden_layer=args.d_model,
             activation_function = 'gelu',  # 'relu' or 'gelu'
-            init_method = 'xavier'
+            init_method = models['init_method']
         )
 
         model = GPT(cfg).to(device)
-    elif args.model_architecture == "bottleneck_gpt":
+    elif args.model_architecture == "unet_gpt":
         
         cfg = BottleneckGPTConfig(
             vocab_size=args.vocab_size,
@@ -236,6 +235,8 @@ def main(cfg):
         opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optimizer == "adagrad":
         opt = torch.optim.Adagrad(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optimizer == 'RMSprop':
+        opt = torch.optim.RMSprop(model.parameters(), lr=args.lr , weight_decay=args.weight_decay)
     else:
         raise ValueError(f"Unsupported optimizer: {args.optimizer}")
     
@@ -266,11 +267,17 @@ def main(cfg):
     ptr = 0
     step = 0
     t0 = time.time()
+    L1 = args.L1
+    L2 = args.L2
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
             step += 1
             xb, yb, ptr = get_batch(train_ids, ptr, args.context_length, args.batch_size, device)
             _, loss = model(xb, yb)
+            # l1_norm = sum(p.abs().sum() for p in model.parameters())
+            # l2_norm = sum(p.pow(2).sum() for p in model.parameters())
+
+            # loss = loss + l1_norm * L1 + l2_norm * L2
             opt.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -338,6 +345,8 @@ if __name__ == "__main__":
         parser.add_argument("--test", type=bool , default=False)
         parser.add_argument("--context_length", type=int, default=128)
         parser.add_argument("--lr", type=float, default=0.006)
+        # parser.add_argument("--L1", type=float, default=0.001)
+        # parser.add_argument("--L2", type=float, default=0.001)
         parser.add_argument("--n_layer", type=int, default=6)
         parser.add_argument("--dropout", type=float, default=0.1)
         parser.add_argument("--weight_decay", type=float, default=0.0)
@@ -373,6 +382,8 @@ if __name__ == "__main__":
             OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
             OmegaConf.update(cfg, "hyperparams.optimizer", args.optimizer)
             OmegaConf.update(cfg, "hyperparams.scheduler", args.scheduler)
+            # OmegaConf.update(cfg, "hyperparams.L1", args.L1)
+            # OmegaConf.update(cfg, "hyperparams.L2", args.L2)
             main(cfg)
             
     finally:
