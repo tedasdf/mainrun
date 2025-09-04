@@ -52,7 +52,13 @@ class MLP(nn.Module):
     def forward(self, x): return self.net(x) 
 
 class Block(nn.Module):
-    def __init__(self, attn_cfg: GPTConfig, hidden_layer: int, norm_type: str, dropout: float, output_dim: int = None):
+    def __init__(self, 
+                 attn_cfg: AttnConfig, 
+                 hidden_layer: int, 
+                 norm_type: str, 
+                 dropout: float, 
+                 output_dim: int = None, 
+                 context_length: int= None):
         super().__init__()
         
         if output_dim == None:
@@ -67,7 +73,7 @@ class Block(nn.Module):
         if isinstance(attn_cfg, AttnConfig):
             self.attn = CausalSelfAttention(attn_cfg, output_dim)
         elif isinstance(attn_cfg, SparseAttnConfig):
-             self.attn = SparseCausalSelfAttention(attn_cfg)
+             self.attn = SparseCausalSelfAttention(attn_cfg, output_dim, context_length)
         elif isinstance(attn_cfg, BottleneckAttnConfig):
             self.attn = CausalBottleneckAttn(attn_cfg)
         else:
@@ -75,14 +81,16 @@ class Block(nn.Module):
         
         self.norm_type = norm_type
         self.mlp  = MLP( output_dim , dropout)
-
         
         self.ln1 = nn.LayerNorm(hidden_layer)
         self.ln2 = nn.LayerNorm(output_dim)
-        
+        print("input : ", hidden_layer)
             
+        print("output : " , output_dim)
+       
     def forward(self, x):
         res = self.residual_proj(x)
+        print(res.shape)
         if self.norm_type == 'pre':
             x = res + self.attn(self.ln1(x))
             x = x + self.mlp(self.ln2(x))
@@ -99,13 +107,19 @@ class GPT(nn.Module):
         self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
         self.pos_emb   = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
         self.drop      = nn.Dropout(cfg.dropout)
-        self.blocks    = nn.ModuleList([
-            Block(
-                cfg.attn_config, 
-                cfg.hidden_layer,  
-                cfg.norm_type, 
-                cfg.dropout
-            ) for _ in range(cfg.n_layer)])
+        self.blocks = nn.ModuleList()
+        for i in range(cfg.n_layer):
+            print(f"Initializing Block {i+1}/{cfg.n_layer}")
+            self.blocks.append(
+                Block(
+                    cfg.attn_config,
+                    cfg.hidden_layer,
+                    cfg.norm_type,
+                    cfg.dropout,
+                    cfg.hidden_layer,
+                    cfg.block_size
+                )
+            )
         self.ln_f      = nn.LayerNorm(cfg.d_model)
         self.head      = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
 

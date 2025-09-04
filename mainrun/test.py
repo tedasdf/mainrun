@@ -1,13 +1,12 @@
 from model.gpt import GPT, GPTConfig
 from model.attention.attention import (
     AttnConfig,
-    CausalBottleneckAttn,
-    SparseCausalSelfAttention
+    BottleneckAttnConfig,
+    SparseAttnConfig
 )
 from model.tokenizer.BPETokenizer import BPETokenizer
 from model.bottleneck import GPUnetT, BottleneckGPTConfig
-import utils
-import math, random, time
+import random, time
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -22,7 +21,7 @@ import structlog
 from omegaconf import OmegaConf
 from typing import Any
 from hyperparam_class import Hyperparameters 
-import wandb
+
 
 def configure_logging(log_file: str):
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -112,11 +111,6 @@ def main(cfg):
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
     models = OmegaConf.to_container(cfg.model_configs[hparams['model_architecture']], resolve=True)
 
-    wandb.init(
-        project="gpt-from-scratch", 
-        entity="arc_agi", 
-        config=hparams   # <--- pass hyperparams to W&B
-    )
 
     # Map into dataclass for your code
     
@@ -163,7 +157,7 @@ def main(cfg):
                 dropout=args.dropout
             )
     elif args.attention_layer == 'bottleneck':
-        attn = CausalBottleneckAttn(
+        attn = BottleneckAttnConfig(
                 d_model=args.d_model,
                 n_head=args.n_head,
                 block_size=args.context_length,
@@ -171,12 +165,11 @@ def main(cfg):
                 bottleneck_dim=args.bottleneck_size
         )
     elif args.attention_layer == 'sparse':
-        attn = SparseCausalSelfAttention(
+        attn_cfg = SparseAttnConfig(
             d_model=args.d_model,
             n_head=args.n_head,
             block_size=args.context_length,
             dropout=args.dropout,
-            bottleneck_dim=args.bottleneck_size,
             attn_type= 'fixed',                 # 'all', 'fixed', 'local'. 'strided'
             num_verts= 8,              #
             local_attn_ctx= 32 ,
@@ -184,7 +177,6 @@ def main(cfg):
             vertsize= 128,
             n_bctx= 2
         )
-        
 
 
     #### Model setup
@@ -195,7 +187,7 @@ def main(cfg):
             n_layer=args.n_layer,
             d_model=args.d_model,
             dropout=args.dropout,
-            attn_config = attn,
+            attn_config = attn_cfg,
             hidden_layer=args.d_model,
             activation_function = 'gelu',  # 'relu' or 'gelu'
             init_method = 'xavier'
@@ -210,7 +202,7 @@ def main(cfg):
             n_layer=args.n_layer,
             d_model=args.d_model,
             dropout=args.dropout,
-            attn_config = attn,
+            attn_config = attn_cfg,
             hidden_layer=args.d_model,
             hidden_layer_list=models['bottleneck_sizes']
         )
@@ -284,11 +276,7 @@ def main(cfg):
                       loss=loss.item(),
                       elapsed_time=elapsed,
                       prnt=False)
-            wandb.log({
-                "train/loss": loss.item(),
-                "train/step": step,
-                "train/elapsed_time": elapsed
-            })
+       
             
             if step == 1 or step % eval_interval == 0 or step == max_steps:
                 val_loss = evaluate()
@@ -298,27 +286,7 @@ def main(cfg):
                           loss=val_loss,
                           elapsed_time=elapsed)
                 
-                wandb.log({
-                    "val/step" : step,
-                    "val/loss": val_loss,
-                    "val/step": step,
-                    "val/elapsed_time": elapsed
-                })
-    artifact = wandb.Artifact("logs" , type="log")
-
-    artifact.add_file(args.log_file)
-    wandb.log_artifact(artifact)
-    wandb.finish()
-
-
-
-
-
-def sweep_train():
-    with wandb.init() as run:
-        cfg = OmegaConf.load({"hyperparams": dict(run.config)})
-        main(cfg)
-
+               
     
 
 if __name__ == "__main__":
@@ -327,15 +295,8 @@ if __name__ == "__main__":
         from dotenv import load_dotenv
         load_dotenv(dotenv_path=".env")  # or just load_dotenv() if .env is in root
 
-        # Access your W&B API key
-        api_key = os.getenv("WANDB_API_KEY")
-
-        # Log in programmatically
-        wandb.login(key=api_key)
-
         import argparse
         parser = argparse.ArgumentParser()
-        parser.add_argument("--test", type=bool , default=False)
         parser.add_argument("--context_length", type=int, default=128)
         parser.add_argument("--lr", type=float, default=0.006)
         parser.add_argument("--n_layer", type=int, default=6)
@@ -357,23 +318,20 @@ if __name__ == "__main__":
         )
         args = parser.parse_args()
 
-        if args.sweep:
-            sweep_id = wandb.sweep(".\config\sweep_gpt.yaml", project="gpt-from-scratch", entity="arc_agi")
-            wandb.agent(sweep_id, function=sweep_train)
-        else:
-            cfg = OmegaConf.load("config/hyperparamstest.yaml")
-            # Update cfg with args
-            OmegaConf.update(cfg, "hyperparams.context_length", args.context_length)
-            OmegaConf.update(cfg, "hyperparams.lr", args.lr)
-            OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
-            OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
-            OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
-            OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
-            OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
-            OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
-            OmegaConf.update(cfg, "hyperparams.optimizer", args.optimizer)
-            OmegaConf.update(cfg, "hyperparams.scheduler", args.scheduler)
-            main(cfg)
+       
+        cfg = OmegaConf.load("config/hyperparamstest.yaml")
+        # Update cfg with args
+        OmegaConf.update(cfg, "hyperparams.context_length", args.context_length)
+        OmegaConf.update(cfg, "hyperparams.lr", args.lr)
+        OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
+        OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
+        OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
+        OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
+        OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
+        OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
+        OmegaConf.update(cfg, "hyperparams.optimizer", args.optimizer)
+        OmegaConf.update(cfg, "hyperparams.scheduler", args.scheduler)
+        main(cfg)
             
     finally:
         if logger and hasattr(logger, 'file_handler'):

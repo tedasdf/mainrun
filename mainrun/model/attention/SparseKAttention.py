@@ -1,8 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from attention import AttnConfig
 import math 
+
+
+@dataclass
+class SparseKAttnConfg(AttnConfig):
+    epilson: int
+
 
 
 class SparseKAttention(nn.Module):
@@ -20,7 +26,10 @@ class SparseKAttention(nn.Module):
         self.proj = nn.Linear(self.bottleneck_dim, cfg.d_model)
         self.attn_drop = nn.Dropout(cfg.dropout)
         self.resid_drop = nn.Dropout(cfg.dropout)
-
+        
+        self.w_score = nn.Linear(cfg.d_model, 1) # scoring linear
+        self.epilson = cfg.epilson
+       
     def forward(self, x: torch.Tensor):
         B, T, C = x.size()
         qkv = self.qkv(x).view(B, T, 3, self.n_head, self.head_dim).transpose(1, 3)
@@ -52,8 +61,16 @@ class SparseKAttention(nn.Module):
         pass
     
 
-    def select(self, k, v):
-        pass
+    def select(self, X):
+        B, T ,C = X.shape()
+        # shape: (1, T, 1), broadcastable to (B, T, 1)
+        pos = torch.arange(1, T + 1, device=X.device, dtype=X.dtype).unsqueeze(0).unsqueeze(-1)
+        u = self.w_score(X) + self.epilson * pos
+        return u # (B, T , 1)
+    
+    def topk(self, u, k):
+        
+        return m_topk
         # att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
         # att = att.masked_fill(self.tril[:T, :T] == 0, float("-inf"))
         # att = F.softmax(att, dim=-1)

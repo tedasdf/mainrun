@@ -7,9 +7,9 @@ parameters:
   lr:
     values: [ 0.012 , 0.01, 0.007 ,  0.005]
   batch_size:
-    values: [32, 64]
+    values: [64, 128]
   context_length:
-    values: [128 ]
+    values: [128 , 256]
   optimizer:
     values: ["sgd", "adamw", "adam", "adagrad"]
   dropout:

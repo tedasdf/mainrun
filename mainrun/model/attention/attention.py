@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,7 +16,7 @@ class AttnConfig:
 
 @dataclass
 class BottleneckAttnConfig(AttnConfig):
-    bottleneck_dim: int  # must be specified for bottleneck attention
+    intermediate_dim: int  # must be specified for bottleneck attention
 
 
 @dataclass
@@ -56,11 +55,11 @@ class CausalSelfAttention(nn.Module):
         return self.resid_drop(self.proj(y))
 
 class CausalBottleneckAttn(CausalSelfAttention):
-    def __init__(self, cfg):
+    def __init__(self, cfg: BottleneckAttnConfig):
         super().__init__(cfg)  # init parent first
 
         # Set bottleneck_dim after parent init
-        self.intermediate_dim = cfg.bottleneck_dim if getattr(cfg, "bottleneck_dim", None) is not None else cfg.d_model
+        self.intermediate_dim = cfg.intermediate_dim if getattr(cfg, "bottleneck_dim", None) is not None else cfg.d_model
         assert self.intermediate_dim % cfg.n_head == 0, "bottleneck_dim must be divisible by n_head"
 
         # Override head_dim and projection layers
@@ -86,6 +85,7 @@ class SparseCausalSelfAttention(CausalSelfAttention):
             - blocksize (int): Size of blocks for local attention (forms 'smaller triangles').
             - vertsize (int): Size of vertical chunks for fixed positions.
             - n_bctx (int): Block context size (sequence length for attention).
+            - n_ctx
         
         Returns:
         - layout (np.ndarray): Attention mask(s) as boolean array(s). Shape is (n_bctx, n_bctx) for num_verts=1,
