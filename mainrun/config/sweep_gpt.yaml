@@ -7,7 +7,7 @@ parameters:
   lr:
     values: [ 0.012 , 0.01, 0.007 ,  0.005]
   batch_size:
-    values: [32, 64, 128]
+    values: [32, 64]
   context_length:
     values: [128 ]
   optimizer:
@@ -19,4 +19,4 @@ parameters:
   d_model:
     values: [ 128, 256, 512 ]
   n_layer:
-    values: [ 4, 6, 8, 10]
+    values: [ 4,6 ]
