@@ -361,7 +361,7 @@ if __name__ == "__main__":
             sweep_id = wandb.sweep(".\config\sweep_gpt.yaml", project="gpt-from-scratch", entity="arc_agi")
             wandb.agent(sweep_id, function=sweep_train)
         else:
-            cfg = OmegaConf.load("config/hyperparamstest.yaml")
+            cfg = OmegaConf.load("config/hyperparams.yaml")
             # Update cfg with args
             OmegaConf.update(cfg, "hyperparams.context_length", args.context_length)
             OmegaConf.update(cfg, "hyperparams.lr", args.lr)
