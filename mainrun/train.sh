@@ -113,4 +113,4 @@
 
 # python3 train.py --batch_size=128 --context_length=256 --d_model=128 --dropout=0.1 --lr=0.01 --n_layer=8 --optimizer=adamw --weight_decay=0.1
 
-python3 train.py --orig_yaml "config\model_vallos=1.2.yaml"
+python3 train.py --orig_yaml "config/model_vallos=1.2.yaml"
