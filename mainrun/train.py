@@ -14,7 +14,7 @@ import copy
 import  random, time
 import json
 from pathlib import Path
-from ptflops import get_model_complexity_info
+
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
