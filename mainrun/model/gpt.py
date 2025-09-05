@@ -32,6 +32,7 @@ class GPTConfig:
     attn_config : AttnConfig
     hidden_layer : int
     attention_layer: str
+    block_layer: str
     norm_type: str  = 'pre' # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
     init_method: str = 'xavier'
@@ -91,8 +92,7 @@ class Block(nn.Module):
             x = self.ln1(res + self.attn(x))
             x = self.ln2(x + self.mlp(x))
         return x
-    
-
+  
 class GPT(nn.Module):
     def __init__(self, cfg: GPTConfig):
         super().__init__()
