@@ -2,7 +2,7 @@ from mainrun.hyperparam_class import Hyperparameters
 from omegaconf import OmegaConf
 # memory_estimator.py
 import math
-cfg = OmegaConf.load("mainrun\config\hyperparams1.yaml")
+cfg = OmegaConf.load("mainrun\config\model_vallos=1.2.yaml")
 hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
 args = Hyperparameters(**hparams)
 
