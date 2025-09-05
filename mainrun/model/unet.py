@@ -18,9 +18,9 @@ class GPUnetT(GPT):
         super().__init__(cfg)
         
         self.blocks = nn.ModuleList([])
-        hidden_layer_list =  cfg.hidden_layer_list + [cfg.d_model]
+        hidden_layer_list =  [cfg.d_model] + cfg.hidden_layer_list + [cfg.d_model]
         
-        for i in range(cfg.n_layer):
+        for i in range(len(hidden_layer_list)-1):
             self.blocks.append(
                 Block(
                     cfg.attn_config, 

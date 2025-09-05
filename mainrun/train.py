@@ -401,7 +401,7 @@ if __name__ == "__main__":
 
     if not args.test:
         wandb.login(key=os.getenv("WANDB_API_KEY"))
-        import utils
+        # import utils
     else:
         from ptflops import get_model_complexity_info
 
