@@ -1,0 +1,29 @@
+name: Run Sweep
+
+on:
+  workflow_dispatch:   # Trigger manually
+
+jobs:
+  sweep:
+    runs-on: [self-hosted, x64, linux, docker]
+
+    steps:
+      - name: Update repo
+        run: |
+          cd /home/labadmin/Documents/mainrun
+          git reset --hard
+          git pull origin main
+
+      - name: Run Sweep Agent in Docker
+        run: |
+          docker run --rm --gpus all \
+          -v /home/labadmin/Documents/mainrun:/workspace \
+          -w /workspace/mainrun \
+          --env-file /home/labadmin/Documents/mainrun/.env \
+          -e WANDB_PYTHON_EXECUTABLE=/usr/bin/python3 \
+          -e PYTHONPATH=/workspace/mainrun \
+          mainrun-env \
+          bash -c "nvidia-smi"
+
+
+    
