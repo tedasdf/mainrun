@@ -1,14 +1,17 @@
 from model.gpt import GPT, GPTConfig
 from model.attention.attention import (
     AttnConfig,
-    CausalBottleneckAttn,
-    SparseCausalSelfAttention
+    SparseAttnConfig
 )
+import os
+from dotenv import load_dotenv
+import wandb
+from omegaconf import OmegaConf
+import argparse
 from model.tokenizer.BPETokenizer import BPETokenizer
-from model.bottleneck import GPUnetT, BottleneckGPTConfig
-import utils
-import math, random, time
-from dataclasses import dataclass
+from model.unet import GPUnetT, BottleneckGPTConfig
+
+import  random, time
 import json
 from pathlib import Path
 
@@ -19,10 +22,9 @@ from datasets import load_dataset
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from tqdm import tqdm
 import structlog
-from omegaconf import OmegaConf
 from typing import Any
 from hyperparam_class import Hyperparameters 
-import wandb
+
 
 def configure_logging(log_file: str):
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -107,16 +109,18 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 
 
 
-def main(cfg):
+def main(cfg, test=True):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
-    models = OmegaConf.to_container(cfg.model_configs[hparams['model_architecture']], resolve=True)
-
-    wandb.init(
-        project="gpt-from-scratch", 
-        entity="arc_agi", 
-        config=hparams   # <--- pass hyperparams to W&B
-    )
+    modelparams = OmegaConf.to_container(cfg.model_configs[hparams['model_architecture']], resolve=True)
+    attnparams = OmegaConf.to_container(cfg.attn_configs[modelparams['attention_layer']], resolve=True)
+    
+    if not test:
+        wandb.init(
+            project="gpt-from-scratch", 
+            entity="arc_agi", 
+            config=hparams   # <--- pass hyperparams to W&B
+        )
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
@@ -154,34 +158,20 @@ def main(cfg):
                vocab_size=tok.vocab_size)
     
     ### Attention setup
-    if args.attention_layer == 'causal':
+    if modelparams['attention_layer'] == 'causal':
         attn = AttnConfig(
-                d_model=args.d_model,
-                n_head=args.n_head,
-                block_size=args.context_length,
-                dropout=args.dropout
-            )
-    elif args.attention_layer == 'bottleneck':
-        attn = CausalBottleneckAttn(
-                d_model=args.d_model,
-                n_head=args.n_head,
-                block_size=args.context_length,
-                dropout=args.dropout,
-                bottleneck_dim=args.bottleneck_size
-        )
-    elif args.attention_layer == 'sparse':
-        attn = SparseCausalSelfAttention(
-            d_model=args.d_model,
-            n_head=args.n_head,
+            d_model=modelparams['d_model'],
             block_size=args.context_length,
-            dropout=args.dropout,
-            bottleneck_dim=args.bottleneck_size,
-            attn_type= 'fixed',                 # 'all', 'fixed', 'local'. 'strided'
-            num_verts= 8,              #
-            local_attn_ctx= 32 ,
-            sparseblocksize= 64,
-            vertsize= 128,
-            n_bctx= 2
+            dropout=modelparams['dropout'],
+            **attnparams
+        )
+
+    elif modelparams['attention_layer'] == 'sparse':
+        attn = SparseAttnConfig(
+            d_model=modelparams['d_model'],
+            block_size=args.context_length,
+            dropout=modelparams['dropout'],
+            **attnparams
         )
         
 
@@ -189,29 +179,20 @@ def main(cfg):
     #### Model setup
     if args.model_architecture == "gpt":
         cfg = GPTConfig(
-            vocab_size=args.vocab_size,
-            block_size=args.context_length,
-            n_layer=args.n_layer,
-            d_model=args.d_model,
-            dropout=args.dropout,
-            attn_config = attn,
-            hidden_layer=args.d_model,
-            activation_function = 'gelu',  # 'relu' or 'gelu'
-            init_method = models['init_method']
-        )
-
+                vocab_size=args.vocab_size,
+                block_size=args.context_length,
+                attn_config = attn,
+                activation_function = 'gelu',
+                **modelparams
+            )
         model = GPT(cfg).to(device)
     elif args.model_architecture == "unet_gpt":
-        
         cfg = BottleneckGPTConfig(
             vocab_size=args.vocab_size,
             block_size=args.context_length,
-            n_layer=args.n_layer,
-            d_model=args.d_model,
-            dropout=args.dropout,
             attn_config = attn,
-            hidden_layer=args.d_model,
-            hidden_layer_list=models['bottleneck_sizes']
+            activation_function='gelu'
+            **modelparams
         )
         model = GPUnetT(cfg).to(device)
     else:
@@ -290,11 +271,12 @@ def main(cfg):
                       loss=loss.item(),
                       elapsed_time=elapsed,
                       prnt=False)
-            wandb.log({
-                "train/loss": loss.item(),
-                "train/step": step,
-                "train/elapsed_time": elapsed
-            })
+            if not test:
+                wandb.log({
+                    "train/loss": loss.item(),
+                    "train/step": step,
+                    "train/elapsed_time": elapsed
+                })
             
             if step == 1 or step % eval_interval == 0 or step == max_steps:
                 val_loss = evaluate()
@@ -304,89 +286,49 @@ def main(cfg):
                           loss=val_loss,
                           elapsed_time=elapsed)
                 
-                wandb.log({
-                    "val/step" : step,
-                    "val/loss": val_loss,
-                    "val/step": step,
-                    "val/elapsed_time": elapsed
-                })
-    artifact = wandb.Artifact("logs" , type="log")
+                if not test:
+                    wandb.log({
+                        "val/step" : step,
+                        "val/loss": val_loss,
+                        "val/step": step,
+                        "val/elapsed_time": elapsed
+                    })
+    if not test:
+        artifact = wandb.Artifact("logs" , type="log")
 
-    artifact.add_file(args.log_file)
-    wandb.log_artifact(artifact)
-    wandb.finish()
+        artifact.add_file(args.log_file)
+        wandb.log_artifact(artifact)
+        wandb.finish()
 
 
-
-
-
-def sweep_train():
-    with wandb.init() as run:
-        cfg = OmegaConf.load({"hyperparams": dict(run.config)})
-        main(cfg)
-
-    
 
 if __name__ == "__main__":
-    try:
-        import os
-        from dotenv import load_dotenv
-        load_dotenv(dotenv_path=".env")  # or just load_dotenv() if .env is in root
 
-        # Access your W&B API key
-        api_key = os.getenv("WANDB_API_KEY")
 
-        # Log in programmatically
-        wandb.login(key=api_key)
+    load_dotenv(dotenv_path=".env")
+    
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--test", action="store_true", help="Run test")
+    parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
+    parser.add_argument("--sweep-config", type=str, help="Path to sweep YAML config")
+    parser.add_argument("--orig_yaml", type=str, default="config/hyperparams.yaml")
+    args = parser.parse_args()
 
-        import argparse
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--test", type=bool , default=False)
-        parser.add_argument("--context_length", type=int, default=128)
-        parser.add_argument("--lr", type=float, default=0.006)
-        # parser.add_argument("--L1", type=float, default=0.001)
-        # parser.add_argument("--L2", type=float, default=0.001)
-        parser.add_argument("--n_layer", type=int, default=6)
-        parser.add_argument("--dropout", type=float, default=0.1)
-        parser.add_argument("--weight_decay", type=float, default=0.0)
-        parser.add_argument("--d_model", type=int, default=512)
-        parser.add_argument("--batch_size", type=int, default=64)
-        parser.add_argument("--bottleneck_size", type=int, default=256)
-        parser.add_argument("--optimizer", type=str, default="sgd")
-        parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
-        parser.add_argument("--model_arhitecture", type=str, default="gpt")
-        parser.add_argument("--scheduler",type=str, default="cosine")    
-        parser.add_argument("--init_method" , type=str, default="xaviuer")
-        # Important: match sweep key    
-        parser.add_argument(
-            "--bottleneck_sizes",
-            type=lambda s: [int(x) for x in s.strip("[]").replace(",", " ").split()],
-            default=[512, 256, 256, 128, 128, 256],
-            help="List of bottleneck sizes per layer"
-        )
-        args = parser.parse_args()
-
-        if args.sweep:
-            sweep_id = wandb.sweep(".\config\sweep_gpt.yaml", project="gpt-from-scratch", entity="arc_agi")
-            wandb.agent(sweep_id, function=sweep_train)
-        else:
-            cfg = OmegaConf.load("config/hyperparams.yaml")
-            # Update cfg with args
-            OmegaConf.update(cfg, "hyperparams.context_length", args.context_length)
-            OmegaConf.update(cfg, "hyperparams.lr", args.lr)
-            OmegaConf.update(cfg, "hyperparams.n_layer", args.n_layer)
-            OmegaConf.update(cfg, "hyperparams.dropout", args.dropout)
-            OmegaConf.update(cfg, "hyperparams.weight_decay", args.weight_decay)
-            OmegaConf.update(cfg, "hyperparams.d_model", args.d_model)
-            OmegaConf.update(cfg, "hyperparams.batch_size", args.batch_size)
-            OmegaConf.update(cfg, "hyperparams.model_architecture", args.model_arhitecture)
-            OmegaConf.update(cfg, "hyperparams.optimizer", args.optimizer)
-            OmegaConf.update(cfg, "hyperparams.scheduler", args.scheduler)
-            OmegaConf.update(cfg, "hyperparams.init_method", args.init_method)
-            # OmegaConf.update(cfg, "hyperparams.L1", args.L1)
-            # OmegaConf.update(cfg, "hyperparams.L2", args.L2)
+    def sweep_train():
+        orig_cfg = OmegaConf.load(args.orig_yaml)  # defaults
+        with wandb.init() as run:
+            sweep_cfg = OmegaConf.create({"hyperparams": dict(run.config)})
+            cfg = OmegaConf.merge(orig_cfg, sweep_cfg)
             main(cfg)
-            
-    finally:
-        if logger and hasattr(logger, 'file_handler'):
-            logger.file_handler.close()
+
+    if not args.test:
+        wandb.login(key=os.getenv("WANDB_API_KEY"))
+        import utils
+
+    if args.sweep:
+        sweep_id = wandb.sweep(args.sweep_config, project="gpt-from-scratch", entity="arc_agi")
+        wandb.agent(sweep_id, function=sweep_train)
+    else:
+        cfg = OmegaConf.load(args.orig_yaml )
+        main(cfg, args.test)

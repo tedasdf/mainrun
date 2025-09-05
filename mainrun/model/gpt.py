@@ -4,8 +4,6 @@ from model.attention.attention import (
     CausalSelfAttention,
     SparseAttnConfig,
     SparseCausalSelfAttention,
-    BottleneckAttnConfig,
-    CausalBottleneckAttn
 )
 
 import torch
@@ -33,11 +31,11 @@ class GPTConfig:
     dropout: float
     attn_config : AttnConfig
     hidden_layer : int
+    attention_layer: str
     norm_type: str  = 'pre' # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
     init_method: str = 'xavier'
-
-
+    
 
 
 class MLP(nn.Module):
@@ -74,8 +72,6 @@ class Block(nn.Module):
             self.attn = CausalSelfAttention(attn_cfg, output_dim)
         elif isinstance(attn_cfg, SparseAttnConfig):
              self.attn = SparseCausalSelfAttention(attn_cfg, output_dim, context_length)
-        elif isinstance(attn_cfg, BottleneckAttnConfig):
-            self.attn = CausalBottleneckAttn(attn_cfg)
         else:
             raise ValueError("Unsupported attention configuration")
         
@@ -106,7 +102,7 @@ class GPT(nn.Module):
         self.drop      = nn.Dropout(cfg.dropout)
         self.blocks = nn.ModuleList()
         for i in range(cfg.n_layer):
-
+            print(f"Initializing Block {i+1}/{cfg.n_layer}")
             self.blocks.append(
                 Block(
                     cfg.attn_config,

@@ -5,7 +5,7 @@ from model.attention.attention import (
     SparseAttnConfig
 )
 from model.tokenizer.BPETokenizer import BPETokenizer
-from model.bottleneck import GPUnetT, BottleneckGPTConfig
+from mainrun.model.unet import GPUnetT, BottleneckGPTConfig
 import random, time
 from dataclasses import dataclass
 import json

@@ -14,44 +14,47 @@ hyperparams:
   model_architecture: "gpt" # gpt, bottleneck_gpt, unet_gpt
   log_file: "./logs/mainrun.log"
   ###############################################
-  # MODEL hyperparameters (also in model.yaml)
-  ###############################################
-  batch_size: 128
-  n_layer: 8
-  n_head: 8
-  d_model: 128 # Dimension of the model
-  dropout: 0.1
-  bottleneck_size: 256  # Set to 0 for no bottleneck, >0 for bottleneck size
-  attention_layer: 'causal'
-  ###############################################
   # Training hyperparameters
   ###############################################
-  lr: 0.01
+  batch_size: 128
+  lr: 0.012
   weight_decay: 0.0
   scheduler: "cosine" # none, linear, cosine
-  optimizer: "adamw" 
+  optimizer: "adagrad" 
   evals_per_epoch: 3
 
-
-attn_configs:
-  causal:
-    n_head: 8
-  spares:
-    type: 'fixed' # sparse , 
 
 
 model_configs:
   gpt:
-    d_model: 512
-    n_layer: 6
-    dropout: 0.1
-  bottleneck_gpt:
-    d_model: 512
-    n_head: 8
-    n_layer: 6
-    dropout: 0.1
-    bottleneck_sizes: [512, 256, 256, 128, 128, 256]
+    d_model: 256
+    hidden_layer: 256
+    n_layer: 12
+    dropout: 0.2
+    init_method: 'xavier'
+    attention_layer: 'sparse'
+  # unet_gpt:
+  #   d_model: 512
+  #   hidden_layer: 128
+  #   n_layer: 6
+  #   dropout: 0.1
+  #   init_method: 'xavier'
+  #   attention_layer: 'causal'
+  #   bottleneck_sizes: [512, 256, 256, 128, 128, 256]
 
+attn_configs:
+  causal:
+    n_head: 8
+    intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
+  sparse:
+    attn_type: 'fixed'  # 'all', 'fixed', 'local'. 'strided'
+    n_head: 8
+    num_verts: 8   #
+    local_attn_ctx: 32
+    sparseblocksize: 64
+    vertsize: 128
+    n_bctx: 2
+    intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
 
 
       #   UNET d_model: 512

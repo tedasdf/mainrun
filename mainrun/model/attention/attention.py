@@ -13,9 +13,6 @@ class AttnConfig:
     n_head: int
     block_size: int
     dropout: float
-
-@dataclass
-class BottleneckAttnConfig(AttnConfig):
     intermediate_dim: int  # must be specified for bottleneck attention
 
 
@@ -32,12 +29,18 @@ class SparseAttnConfig(AttnConfig):
 class CausalSelfAttention(nn.Module):
     def __init__(self, cfg: AttnConfig , output_dim = None):
         super().__init__()
-        assert cfg.d_model % cfg.n_head == 0
-        self.head_dim = cfg.d_model // cfg.n_head
-        self.intermediate_dim  = cfg.d_model
+        
+        if cfg.intermediate_dim == 0:
+            self.intermediate_dim  = cfg.d_model
+        else :
+            self.intermediate_dim = cfg.intermediate_dim 
+        assert self.intermediate_dim % cfg.n_head == 0, "bottleneck_dim must be divisible by n_head"
+
+        # Override head_dim and projection layers
+        self.head_dim = self.intermediate_dim // cfg.n_head
         self.n_head   = cfg.n_head
-        self.qkv = nn.Linear(cfg.d_model, 3 * cfg.d_model)
-        self.proj = nn.Linear(cfg.d_model, output_dim)
+        self.qkv = nn.Linear(cfg.d_model, 3 * self.intermediate_dim)
+        self.proj = nn.Linear(self.intermediate_dim, output_dim)
         self.attn_drop = nn.Dropout(cfg.dropout)
         self.resid_drop= nn.Dropout(cfg.dropout)
         self.register_buffer("tril", torch.tril(torch.ones(cfg.block_size, cfg.block_size)))
@@ -54,18 +57,6 @@ class CausalSelfAttention(nn.Module):
         y = y.transpose(1, 2).contiguous().view(B, T, self.intermediate_dim)
         return self.resid_drop(self.proj(y))
 
-class CausalBottleneckAttn(CausalSelfAttention):
-    def __init__(self, cfg: BottleneckAttnConfig):
-        super().__init__(cfg)  # init parent first
-
-        # Set bottleneck_dim after parent init
-        self.intermediate_dim = cfg.intermediate_dim if getattr(cfg, "bottleneck_dim", None) is not None else cfg.d_model
-        assert self.intermediate_dim % cfg.n_head == 0, "bottleneck_dim must be divisible by n_head"
-
-        # Override head_dim and projection layers
-        self.head_dim = self.intermediate_dim // cfg.n_head
-        self.qkv = nn.Linear(cfg.d_model, 3 * self.intermediate_dim)
-        self.proj = nn.Linear(self.intermediate_dim, cfg.d_model)
 
 class SparseCausalSelfAttention(CausalSelfAttention):
     def __init__(self, cfg, n_ctx):
@@ -85,7 +76,6 @@ class SparseCausalSelfAttention(CausalSelfAttention):
             - blocksize (int): Size of blocks for local attention (forms 'smaller triangles').
             - vertsize (int): Size of vertical chunks for fixed positions.
             - n_bctx (int): Block context size (sequence length for attention).
-            - n_ctx
         
         Returns:
         - layout (np.ndarray): Attention mask(s) as boolean array(s). Shape is (n_bctx, n_bctx) for num_verts=1,

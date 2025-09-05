@@ -4,24 +4,24 @@ metric:
   name: val/loss
   goal: minimize
 parameters:
-  lr:
+  hyperparams.lr:
     values: [  0.015 , 0.012 , 0.01, 0.007 ,  0.005]
-  batch_size:
+  hyperparams.batch_size:
     values: [64 , 128]
-  context_length:
+  hyperparams.context_length:
     values:  [256]
-  optimizer:
+  hyperparams.optimizer:
     values: ["adamw"]
-  dropout:
+  model_configs.gpt.dropout:
     values: [0.1, 0.2, 0.3 , 0.4]
-  weight_decay:
+  model_configs.gpt.weight_decay:
     values: [0.0, 0.05,  0.1 , 0.12 , 0.15]
-  d_model:
+  model_configs.gpt.d_model:
     values: [ 128, 256]
-  n_layer:
+  model_configs.gpt.n_layer:
     values: [ 6,  8 ]
 
-  init_method:
+  model_configs.gpt.init_method:
     values: ['xavier' , 'normal' , 'kaiming', 'uniform']
 
 
