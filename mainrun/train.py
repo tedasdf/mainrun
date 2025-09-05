@@ -412,7 +412,7 @@ if __name__ == "__main__":
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
 
         sweep_id = wandb.sweep(cfg_dict, project="gpt-from-scratch", entity="arc_agi")
-        wandb.agent(sweep_id, function=sweep_train)
+        wandb.agent(sweep_id, function=sweep_train , count=150)
     else:
         cfg = OmegaConf.load(args.orig_yaml )
         main(cfg, args.test)
