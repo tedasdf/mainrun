@@ -108,7 +108,7 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 
 
 
-def main(cfg, test=True):
+def main(cfg, test=True, amp_bool = False):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
     modelparams = OmegaConf.to_container(cfg.model_configs[hparams['model_architecture']], resolve=True)
@@ -210,6 +210,7 @@ def main(cfg, test=True):
         model_dict['attn_config'] = vars(cfg.attn_config)
         logger.log("model_configured", **model_dict)
 
+        logger.log("estimation of memory" ,model.memory_before_inference())
     ###############
     # MODEL PARAMS
     
@@ -258,21 +259,43 @@ def main(cfg, test=True):
     ptr = 0
     step = 0
     t0 = time.time()
-    
+    scaler = GradScaler()
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
             step += 1
             xb, yb, ptr = get_batch(train_ids, ptr, args.context_length, args.batch_size, device)
-            _, loss = model(xb, yb)
-            # l1_norm = sum(p.abs().sum() for p in model.parameters())
-            # l2_norm = sum(p.pow(2).sum() for p in model.parameters())
+            
 
-            # loss = loss + l1_norm * L1 + l2_norm * L2
-            opt.zero_grad(set_to_none=True)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            opt.step()
-            scheduler.step()
+            if amp_bool:
+                with autocast():  # enables float16 for eligible ops
+                    _, loss = model(xb, yb)
+
+                # Backward with gradient scaling
+                scaler.scale(loss).backward()
+
+                # Gradient clipping (scale before unscale!)
+                scaler.unscale_(opt)  # important for clip_grad_norm_
+        
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+
+                # Optimizer step
+                scaler.step(opt)
+                scaler.update()
+
+                # Scheduler step (unchanged)
+                scheduler.step()
+            else:
+                _, loss = model(xb, yb)
+            
+                # l1_norm = sum(p.abs().sum() for p in model.parameters())
+                # l2_norm = sum(p.pow(2).sum() for p in model.parameters())
+
+                # loss = loss + l1_norm * L1 + l2_norm * L2
+                opt.zero_grad(set_to_none=True)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                opt.step()
+                scheduler.step()
 
             elapsed = time.time() - t0
             logger.log("training_step",
