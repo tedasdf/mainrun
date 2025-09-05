@@ -14,7 +14,7 @@ import copy
 import  random, time
 import json
 from pathlib import Path
-
+from ptflops import get_model_complexity_info
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -199,10 +199,21 @@ def main(cfg, test=True):
         raise ValueError(f"Unsupported model architecture: {args.model_arhitecture}")
     
 
+    ###############
+    # MODEL FLOPS
+
+
+    flops, params = get_model_complexity_info(model, (args.context_length,), as_strings=True,
+                                          print_per_layer_stat=True)
+    logger.log(f"model_info: \n FLOPs: {flops}, \nParameters: {params}")
+
     model_dict = vars(cfg).copy()
     model_dict['attn_config'] = vars(cfg.attn_config)
     logger.log("model_configured", **model_dict)
 
+    ###############
+    # MODEL PARAMS
+    
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.log("model_info", parameters_count=model_params)
 
@@ -360,7 +371,7 @@ if __name__ == "__main__":
 
             print("After applying sweep")
             print(cfg)
-            main(cfg)
+            main(cfg , False)
 
 
     if not args.test:
