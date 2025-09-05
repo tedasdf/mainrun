@@ -45,6 +45,8 @@ class CausalSelfAttention(nn.Module):
         self.resid_drop= nn.Dropout(cfg.dropout)
         self.register_buffer("tril", torch.tril(torch.ones(cfg.block_size, cfg.block_size)))
 
+        
+
     def forward(self, x: torch.Tensor):
         B, T, C = x.size()
         qkv = self.qkv(x).view(B, T, 3, self.n_head, self.head_dim).transpose(1, 3)
@@ -56,6 +58,29 @@ class CausalSelfAttention(nn.Module):
         y = att @ v
         y = y.transpose(1, 2).contiguous().view(B, T, self.intermediate_dim)
         return self.resid_drop(self.proj(y))
+
+    def memory_before_inference(self, dtype=torch.float32):
+        elem_size = torch.tensor([], dtype=dtype).element_size()
+
+        # Parameters (same as CausalSelfAttention)
+        proj_out = self.proj.out_features if self.proj.out_features is not None else self.intermediate_dim
+        param_mem = (
+            (3 * self.intermediate_dim * self.qkv.in_features) +  # qkv.weight
+            (3 * self.intermediate_dim) +                         # qkv.bias
+            (proj_out * self.intermediate_dim) +                  # proj.weight
+            (proj_out)                                            # proj.bias
+        ) * elem_size
+
+        # Sparse buffer
+        if self.tril.is_sparse:
+            # sparse COO format: indices + values
+            buffer_mem = (self.tril._nnz() * self.tril.indices().size(0) + self.tril._nnz()) * elem_size
+        else:
+            buffer_mem = self.tril.numel() * elem_size
+
+        total_mem = param_mem + buffer_mem
+        return total_mem / (1024 ** 2)  # MB
+
 
 
 class SparseCausalSelfAttention(CausalSelfAttention):
@@ -162,6 +187,8 @@ class SparseCausalSelfAttention(CausalSelfAttention):
                     if k_idx + offset >= q_idx and k_idx <= q_idx:
                         layout[q_idx, k_idx] = 1
         return layout
+
+
 
 # if __name__ == "__main__":
 #     import torch

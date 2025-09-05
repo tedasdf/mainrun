@@ -49,6 +49,16 @@ class MLP(nn.Module):
         )
     def forward(self, x): return self.net(x) 
 
+    def memory_before_inference(self, dtype=torch.float32):
+        elem_size = torch.tensor([], dtype=dtype).element_size()
+        l1_weight = self.net[0].weight.numel()
+        l1_bias   = self.net[0].bias.numel()
+        l2_weight = self.net[2].weight.numel()
+        l2_bias   = self.net[2].bias.numel()
+        total_params = l1_weight + l1_bias + l2_weight + l2_bias
+        return total_params * elem_size / (1024 ** 2)  # MB
+
+
 class Block(nn.Module):
     def __init__(self, 
                  attn_cfg: AttnConfig, 
@@ -91,7 +101,34 @@ class Block(nn.Module):
             x = self.ln1(res + self.attn(x))
             x = self.ln2(x + self.mlp(x))
         return x
-  
+    
+    def block_memory_before_inference(self, dtype=torch.float32):
+        total_mem = 0
+
+        # Attention memory
+        if hasattr(self.attn, "memory_before_inference"):
+            total_mem += self.attn.memory_before_inference(dtype)
+        else:
+            # fallback for generic modules
+            total_mem += sum(p.numel() * torch.tensor([], dtype=dtype).element_size() for p in self.attn.parameters())
+
+        # MLP memory
+        if hasattr(self.mlp, "memory_before_inference"):
+            total_mem += self.mlp.memory_before_inference(dtype)
+        else:
+            total_mem += sum(p.numel() * torch.tensor([], dtype=dtype).element_size() for p in self.mlp.parameters())
+
+        # Residual projection
+        if isinstance(self.residual_proj, nn.Linear):
+            total_mem += (self.residual_proj.weight.numel() + self.residual_proj.bias.numel()) * torch.tensor([], dtype=dtype).element_size()
+
+        # LayerNorms
+        for ln in [self.ln1, self.ln2]:
+            total_mem += sum(p.numel() * torch.tensor([], dtype=dtype).element_size() for p in ln.parameters())
+
+        return total_mem / (1024 ** 2)  # MB
+
+
 class GPT(nn.Module):
     def __init__(self, cfg: GPTConfig):
         super().__init__()
@@ -117,6 +154,37 @@ class GPT(nn.Module):
 
         self.apply(lambda m: self._init_weights(m, self.cfg))
         self.head.weight = self.token_emb.weight
+
+    def memory_before_inference(self, dtype=torch.float32):
+        elem_size = torch.tensor([], dtype=dtype).element_size()
+        total_mem = 0
+
+        # Token embedding
+        total_mem += self.token_emb.weight.numel() * elem_size
+
+        # Positional embedding
+        total_mem += self.pos_emb.numel() * elem_size
+
+        # Dropout has no persistent parameters
+
+        # Blocks
+        for i, block in enumerate(self.blocks):
+            if hasattr(block, "memory_before_inference"):
+                block_mem = block.memory_before_inference(dtype)
+            else:
+                block_mem = sum(p.numel() * elem_size for p in block.parameters())
+            print(f"Block {i+1} memory: {block_mem / (1024**2):.3f} MB")
+            total_mem += block_mem
+
+        # Final LayerNorm
+        total_mem += sum(p.numel() * elem_size for p in self.ln_f.parameters())
+
+        # Head
+        total_mem += self.head.weight.numel() * elem_size
+
+        print(f"Total GPT memory before inference: {total_mem / (1024**2):.3f} MB")
+        return total_mem / (1024**2)  # MB
+
 
     @staticmethod
     def _init_weights(module, cfg):

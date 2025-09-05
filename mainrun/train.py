@@ -9,7 +9,7 @@ import wandb
 from omegaconf import OmegaConf
 import argparse
 from model.tokenizer.BPETokenizer import BPETokenizer
-from model.unet import GPUnetT, BottleneckGPTConfig
+from model.unet import GPUnetT, UnetGPTConfig
 import copy
 import  random, time
 import json
@@ -186,7 +186,7 @@ def main(cfg, test=True):
             )
         model = GPT(cfg).to(device)
     elif args.model_architecture == "unet_gpt":
-        cfg = BottleneckGPTConfig(
+        cfg = UnetGPTConfig(
             vocab_size=args.vocab_size,
             block_size=args.context_length,
             attn_config = attn,
