@@ -23,7 +23,7 @@ jobs:
           -e WANDB_PYTHON_EXECUTABLE=/usr/bin/python3 \
           -e PYTHONPATH=/workspace/mainrun \
           mainrun-env \
-          bash -c "nvidia-smi"
+          bash -c "nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv"
 
 
     
