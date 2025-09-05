@@ -203,13 +203,13 @@ def main(cfg, test=True):
     # MODEL FLOPS
 
 
-    flops, params = get_model_complexity_info(model, (args.context_length,), as_strings=True,
-                                          print_per_layer_stat=True)
-    logger.log(f"model_info: \n FLOPs: {flops}, \nParameters: {params}")
+    # flops, params = get_model_complexity_info(model, (args.context_length,), as_strings=True,
+    #                                       print_per_layer_stat=True)
+    # logger.log(f"model_info: \n FLOPs: {flops}, \nParameters: {params}")
 
-    model_dict = vars(cfg).copy()
-    model_dict['attn_config'] = vars(cfg.attn_config)
-    logger.log("model_configured", **model_dict)
+    # model_dict = vars(cfg).copy()
+    # model_dict['attn_config'] = vars(cfg.attn_config)
+    # logger.log("model_configured", **model_dict)
 
     ###############
     # MODEL PARAMS
