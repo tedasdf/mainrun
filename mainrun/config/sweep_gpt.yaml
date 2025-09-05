@@ -5,7 +5,7 @@ metric:
   goal: minimize
 parameters:
   hyperparams.lr:
-    values: [  0.015 , 0.012 , 0.01, 0.007 ,  0.005]
+    values: [  0.012, 0.01,0.005]
   hyperparams.batch_size:
     values: [64 , 128]
   hyperparams.context_length:
@@ -13,9 +13,9 @@ parameters:
   hyperparams.optimizer:
     values: ["adamw"]
   model_configs.gpt.dropout:
-    values: [0.1, 0.2, 0.3 , 0.4]
+    values: [0.1, 0.3 , 0.4]
   model_configs.gpt.weight_decay:
-    values: [0.0, 0.05,  0.1 , 0.12 , 0.15]
+    values: [0.0,  0.1  , 0.15]
   model_configs.gpt.d_model:
     values: [ 128, 256]
   model_configs.gpt.n_layer:
