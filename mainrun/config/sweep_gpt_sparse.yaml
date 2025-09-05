@@ -1,27 +1,31 @@
-program: train.py   # replace with your script
-method: random      # or grid/bayes
+program: train.py
+method: random
 metric:
   name: val_loss
   goal: minimize
 
 parameters:
-  sparse.attn_type:
-    value: "fixed"
-
-  sparse.n_head:
+  attn_configs.sparse.n_head:
+    # values: 4
     values: [4, 8, 16]
 
-  sparse.num_verts:
+  attn_configs.sparse.num_verts:
+    # values: 4
     values: [4, 8, 16]
 
-  sparse.sparseblocksize:
+  attn_configs.sparse.sparseblocksize:
+    # values: 32
     values: [32, 64, 128]
 
-  sparse.vertsize:
+  attn_configs.sparse.vertsize:
+    # values: 64
     values: [64, 128, 256]
 
-  sparse.n_bctx:
+  attn_configs.sparse.n_bctx:
+    # values: 1
     values: [1, 2, 4]
 
-  sparse.intermediate_dim:
-    values: [0, 64, 128]   # 0 = normal, >0 = bottleneck
+  attn_configs.sparse.intermediate_dim:
+    # values: 0
+    values: [0, 64, 128]
+

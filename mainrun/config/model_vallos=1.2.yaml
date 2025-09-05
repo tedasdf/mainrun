@@ -32,7 +32,7 @@ model_configs:
     n_layer: 6
     dropout: 0.1
     init_method: 'xavier'
-    attention_layer: 'sparse'
+    attention_layer: 'causal'
   # unet_gpt:
   #   d_model: 512
   #   hidden_layer: 128

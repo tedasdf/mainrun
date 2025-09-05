@@ -1,0 +1,9 @@
+attn_configs:
+  sparse:
+    attn_type: "fixed"
+    n_head: 8
+    num_verts: 8
+    sparseblocksize: 64
+    vertsize: 128
+    n_bctx: 2
+    intermediate_dim: 0

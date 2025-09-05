@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 import argparse
 from model.tokenizer.BPETokenizer import BPETokenizer
 from model.unet import GPUnetT, BottleneckGPTConfig
-
+import copy
 import  random, time
 import json
 from pathlib import Path
@@ -300,6 +300,29 @@ def main(cfg, test=True):
         wandb.log_artifact(artifact)
         wandb.finish()
 
+def merge_dotted_keys(base_dict, update_dict, target_path=None):
+    """
+    Merge keys with dots into nested dicts.
+    If target_path is given, merge inside that nested dict.
+    """
+    import copy
+    merged = copy.deepcopy(base_dict)
+    
+    # if target_path is provided, get the nested dict
+    if target_path:
+        d = merged
+        for k in target_path:
+            d = d.setdefault(k, {})
+    else:
+        d = merged
+    
+    for key, value in update_dict.items():
+        parts = key.split(".")
+        curr = d
+        for p in parts[:-1]:
+            curr = curr.setdefault(p, {})
+        curr[parts[-1]] = value
+    return merged
 
 
 if __name__ == "__main__":
@@ -311,23 +334,46 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", action="store_true", help="Run test")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
-    parser.add_argument("--sweep-config", type=str, help="Path to sweep YAML config")
+    parser.add_argument("--sweep_config", type=str, help="Path to sweep YAML config")
     parser.add_argument("--orig_yaml", type=str, default="config/hyperparams.yaml")
     args = parser.parse_args()
 
+ 
     def sweep_train():
-        orig_cfg = OmegaConf.load(args.orig_yaml)  # defaults
+        orig_cfg = OmegaConf.load(args.orig_yaml) # defaults
+        cfg = copy.deepcopy(orig_cfg)  # create a separate copy to modify
+
         with wandb.init() as run:
-            sweep_cfg = OmegaConf.create({"hyperparams": dict(run.config)})
-            cfg = OmegaConf.merge(orig_cfg, sweep_cfg)
+            print("RUNCONFIG")
+            print(dict(run.config))
+            
+            print("Before")
+            print(cfg)
+            
+            for key, val in dict(run.config).items():
+                parts = key.split(".")  # split by all dots
+                d = cfg
+                # traverse down to the last dictionary
+                for p in parts[:-1]:
+                    d = d[p]
+                d[parts[-1]] = val  # set the value
+
+            print("After applying sweep")
+            print(cfg)
             main(cfg)
+
 
     if not args.test:
         wandb.login(key=os.getenv("WANDB_API_KEY"))
-        import utils
+        # import utils
 
     if args.sweep:
-        sweep_id = wandb.sweep(args.sweep_config, project="gpt-from-scratch", entity="arc_agi")
+
+        cfg = OmegaConf.load(args.sweep_config)
+        # Convert to a plain dictionary
+        cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+
+        sweep_id = wandb.sweep(cfg_dict, project="gpt-from-scratch", entity="arc_agi")
         wandb.agent(sweep_id, function=sweep_train)
     else:
         cfg = OmegaConf.load(args.orig_yaml )

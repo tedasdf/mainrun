@@ -32,7 +32,6 @@ class GPTConfig:
     attn_config : AttnConfig
     hidden_layer : int
     attention_layer: str
-    block_layer: str
     norm_type: str  = 'pre' # 'pre' or 'post'
     activation_function: str = 'gelu'  # 'relu' or 'gelu'
     init_method: str = 'xavier'
