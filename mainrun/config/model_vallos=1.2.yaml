@@ -17,7 +17,7 @@ hyperparams:
   # Training hyperparameters
   ###############################################
   batch_size: 128
-  lr: 0.012
+  lr: 0.007
   weight_decay: 0.0
   scheduler: "cosine" # none, linear, cosine
   optimizer: "adagrad" 
@@ -29,8 +29,8 @@ model_configs:
   gpt:
     d_model: 256
     hidden_layer: 256
-    n_layer: 12
-    dropout: 0.2
+    n_layer: 6
+    dropout: 0.1
     init_method: 'xavier'
     attention_layer: 'sparse'
   # unet_gpt:
