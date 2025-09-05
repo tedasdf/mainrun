@@ -26,8 +26,10 @@ jobs:
           bash -c "
             ps aux | grep wandb
             ps aux | grep python
-
-          nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv"
+          nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv
+          
+          
+          nvidia-smi"
 
 
     
