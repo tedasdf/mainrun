@@ -7,20 +7,15 @@
 ⏳ Next Steps
 
 🔧 Development / Infrastructure  
-- [ ] Use MDN workstation for training  
-- [ ] Add GitHub Action → trigger training automatically when uploading  
+- [X] Use MDN workstation for training  
+- [X] Add GitHub Action → trigger training automatically when uploading  
 
-⚡ Model Optimization  
-- [ ] Implement quantisation  
-- [ ] Implement pruning  
 
 🤖 Transformer Architectures & Mechanisms  
-- [ ] Implement Causal Transformers  
-- [ ] Compare Encoder-Decoder vs. Decoder-Only  
-- [ ] Implement and test attention mechanisms:  
-  - [ ] Vanilla self-attention  
-  - [ ] Sparse attention  
-  - [ ] Local attention  
+- [X] Implement and test attention mechanisms:  
+  - [X] Vanilla self-attention  
+  - [x] Sparse attention  
+  - [X] Local attention  
 
 📚 Reading / Research  
 - [ ] Read & take notes on:  

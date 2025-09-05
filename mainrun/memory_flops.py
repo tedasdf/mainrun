@@ -6,11 +6,13 @@ cfg = OmegaConf.load("mainrun\config\model_vallos=1.2.yaml")
 hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
 args = Hyperparameters(**hparams)
 
-print(args.seed)
 # ------------------------------
 # Hyperparameters
 # ------------------------------
-vocab_size =  args.vocab_size
+
+hyperparams = args['hyperparams']
+model = args
+vocab_size =  args.model_configsvocab_size
 context_length =  args.context_length
 batch_size =  args.batch_size
 d_model = args.d_model
@@ -67,3 +69,4 @@ print(f"  Parameters: {param_memory / (1024**2):.2f} MiB")
 print(f"  Activations: {activation_memory / (1024**2):.2f} MiB")
 print(f"  Optimizer states: {optimizer_memory / (1024**2):.2f} MiB")
 print(f"  Total estimated memory: {total_memory_mib:.2f} MiB ({total_memory_gib:.2f} GiB)")
+

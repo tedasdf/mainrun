@@ -21,7 +21,8 @@ jobs:
             -w /workspace \
             --env-file /home/labadmin/Documents/mainrun/.env \
             mainrun-env \
-              bash -c "git config --global --add safe.directory /workspace && \
+              bash -c " pip install ptflops && \
+                       git config --global --add safe.directory /workspace && \
                        git config --global user.email 'teedsingyau@gmail.com' && \
                        git config --global user.name 'Ted Lo' && \
                        task train"
