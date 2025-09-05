@@ -190,7 +190,7 @@ def main(cfg, test=True):
             vocab_size=args.vocab_size,
             block_size=args.context_length,
             attn_config = attn,
-            activation_function='gelu'
+            activation_function='gelu',
             **modelparams
         )
         model = GPUnetT(cfg).to(device)
@@ -337,7 +337,8 @@ def merge_dotted_keys(base_dict, update_dict, target_path=None):
 
 if __name__ == "__main__":
 
-
+    import torch
+    torch.cuda.empty_cache()
     load_dotenv(dotenv_path=".env")
     
     
