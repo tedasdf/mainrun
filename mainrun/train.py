@@ -218,7 +218,6 @@ def main(cfg, test=True, amp_bool = False):
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.log("model_info", parameters_count=model_params)
 
-    return 
 
 
     ### Optimizer and Scheduler
