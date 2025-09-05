@@ -210,12 +210,15 @@ def main(cfg, test=True, amp_bool = False):
         model_dict['attn_config'] = vars(cfg.attn_config)
         logger.log("model_configured", **model_dict)
 
-        logger.log("estimation of memory" ,model.memory_before_inference())
+        logger.log(f"estimation of memory {model.memory_before_inference()} MB")
+
     ###############
     # MODEL PARAMS
     
     model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.log("model_info", parameters_count=model_params)
+
+    return 
 
 
     ### Optimizer and Scheduler

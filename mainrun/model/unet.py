@@ -15,10 +15,7 @@ class UnetGPTConfig(GPTConfig):
 
 class GPUnetT(GPT):
     def __init__(self, cfg: UnetGPTConfig):
-        super().__init__()
-        self.token_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
-        self.pos_emb = nn.Parameter(torch.zeros(1, cfg.block_size, cfg.d_model))
-        self.drop = nn.Dropout(cfg.dropout)
+        super().__init__(cfg)
         
         self.blocks = nn.ModuleList([])
         hidden_layer_list =  cfg.hidden_layer_list + [cfg.d_model]
@@ -34,10 +31,7 @@ class GPUnetT(GPT):
                 )
             )
 
-        self.ln_f = nn.LayerNorm(cfg.d_model)
-        self.head = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
-
-        self.apply(self._init_weights)
+        self.apply(lambda m: self._init_weights(m, self.cfg))
         self.head.weight = self.token_emb.weight
 
     def memory_before_inference(self, dtype=torch.float32):
@@ -70,13 +64,6 @@ class GPUnetT(GPT):
         print(f"Total GPT memory before inference: {total_mem / (1024**2):.3f} MB")
         return total_mem / (1024**2)  # MB
 
-
-    @staticmethod
-    def _init_weights(module):
-        if isinstance(module, (nn.Linear, nn.Embedding)):
-            nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            if isinstance(module, nn.Linear) and module.bias is not None:
-                nn.init.zeros_(module.bias)
     
     def forward(self, idx: torch.Tensor, targets: torch.Tensor | None = None):
         B, T = idx.size()
