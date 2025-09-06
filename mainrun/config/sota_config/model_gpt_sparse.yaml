@@ -1,0 +1,65 @@
+hyperparams: # loss = 1.25668
+  #############################################
+  # FIXED hyperparameters
+  #############################################
+  seed: 1337
+  epochs: 7
+  val_frac: 0.10
+  num_titles: 100000
+  vocab_size: 16000 # Vocabulary size of the tokenizer
+  context_length: 256
+  ##############################################
+  # CHANGEABLE hyperparameters
+  ##############################################
+  model_architecture: "gpt" # gpt, bottleneck_gpt, unet_gpt
+  log_file: "./logs/mainrun.log"
+  ###############################################
+  # Training hyperparameters
+  ###############################################
+  batch_size: 128
+  lr: 0.007
+  weight_decay: 0.0
+  scheduler: "cosine" # none, linear, cosine
+  optimizer: "adagrad" 
+  evals_per_epoch: 3
+
+
+
+model_configs:
+  gpt:
+    d_model: 256
+    hidden_layer: 256
+    n_layer: 6
+    dropout: 0.1
+    init_method: 'xavier'
+    attention_layer: 'sparse'
+  unet_gpt:
+    d_model: 512
+    hidden_layer: 128
+    n_layer: 6
+    dropout: 0.1
+    init_method: 'xavier'
+    attention_layer: 'sparse'
+    bottleneck_sizes: [512, 256, 256, 128, 128, 256]
+
+attn_configs:
+  causal:
+    n_head: 8
+    intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
+  sparse:
+    attn_type: 'fixed'  # 'all', 'fixed', 'local'. 'strided'
+    n_head: 8
+    num_verts: 8   #
+    local_attn_ctx: 32
+    sparseblocksize: 16
+    vertsize: 128
+    n_bctx: 4
+    intermediate_dim : 64 # if 0 , normal , elif > 0 , bottleneck
+
+
+      #   UNET d_model: 512
+  #   n_head: 8
+  #   n_layer: 6
+  #   dropout: 0.1
+  #   bottleneck_size: 256
+  # unet_gpt:
