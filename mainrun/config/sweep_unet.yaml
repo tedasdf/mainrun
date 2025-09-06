@@ -31,5 +31,5 @@ parameters:
       - [512, 256, 128, 64, 64, 128, 256, 512]
 
   model_configs.unet_gpt.d_model:
-    values: [128, 256]
+    values: [128, 256, 512 ]
 
