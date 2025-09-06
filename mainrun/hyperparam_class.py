@@ -16,6 +16,7 @@ class Hyperparameters:
     scheduler: str # none, linear, cosine
     optimizer: str
     evals_per_epoch: float
+    amp_bool: bool
 
 
 

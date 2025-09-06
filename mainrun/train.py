@@ -14,7 +14,8 @@ import copy
 import  random, time
 import json
 from pathlib import Path
-from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import autocast
+from torch.amp import GradScaler
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -108,7 +109,7 @@ def train_tokenizer(titles: list[str], vocab_size: int, unk_token: str = "<unk>"
 
 
 
-def main(cfg, test=True, amp_bool = False):
+def main(cfg, test=True):
     # Convert the OmegaConf section into a normal dict
     hparams = OmegaConf.to_container(cfg.hyperparams, resolve=True)
     modelparams = OmegaConf.to_container(cfg.model_configs[hparams['model_architecture']], resolve=True)
@@ -261,6 +262,7 @@ def main(cfg, test=True, amp_bool = False):
     ptr = 0
     step = 0
     t0 = time.time()
+    
     scaler = GradScaler()
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
@@ -268,7 +270,7 @@ def main(cfg, test=True, amp_bool = False):
             xb, yb, ptr = get_batch(train_ids, ptr, args.context_length, args.batch_size, device)
             
 
-            if amp_bool:
+            if args.amp_bool:
                 with autocast():  # enables float16 for eligible ops
                     _, loss = model(xb, yb)
 
@@ -401,7 +403,7 @@ if __name__ == "__main__":
 
     if not args.test:
         wandb.login(key=os.getenv("WANDB_API_KEY"))
-        # import utils
+        import utils
     else:
         from ptflops import get_model_complexity_info
 
@@ -412,7 +414,7 @@ if __name__ == "__main__":
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
 
         sweep_id = wandb.sweep(cfg_dict, project="gpt-from-scratch", entity="arc_agi")
-        wandb.agent(sweep_id, function=sweep_train , count=150)
+        wandb.agent(sweep_id, function=sweep_train , count=50)
     else:
         cfg = OmegaConf.load(args.orig_yaml )
         main(cfg, args.test)

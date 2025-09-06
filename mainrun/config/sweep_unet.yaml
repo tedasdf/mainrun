@@ -1,3 +1,4 @@
+name: unet gpt sweep 
 program: train.py
 method: random   # or grid, or bayes
 metric:

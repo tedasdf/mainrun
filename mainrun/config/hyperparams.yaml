@@ -22,6 +22,7 @@ hyperparams:
   scheduler: "cosine" # none, linear, cosine
   optimizer: "adamw" 
   evals_per_epoch: 3
+  amp_bool: False
 
 
 
