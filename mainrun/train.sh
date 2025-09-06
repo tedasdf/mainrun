@@ -7,10 +7,7 @@
 #  python train.py --sweep --sweep_config "./config/sweep_unet.yaml" --orig_yaml "./config/hyperparams_unet.yaml"
 
 # sweep with unent and causal
-python train.py --sweep --sweep_config "./config/sweep_unet.yaml" --orig_yaml "./config/hyperparams_unet.yaml"
-
-
-
+# python train.py --sweep --sweep_config "./config/sweep_unet.yaml" --orig_yaml "./config/hyperparams_unet.yaml"
 
 
 # sweep with gpt and causal didnt work before too much memory ( hopefully its fixed )
