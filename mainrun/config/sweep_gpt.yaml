@@ -12,10 +12,10 @@ parameters:
     values:  [256]
   hyperparams.optimizer:
     values: ["adamw" , 'adagrad']
+  hyperparams.weight_decay:
+    values: [ 0.1  , 0.15, 0.3, 0.5]
   model_configs.gpt.dropout:
     values: [0.1, 0.3 , 0.4]
-  model_configs.gpt.weight_decay:
-    values: [ 0.1  , 0.15, 0.3, 0.5]
   model_configs.gpt.d_model:
     values: [ 128, 256]
   model_configs.gpt.n_layer:
