@@ -7,6 +7,8 @@ import os
 from dotenv import load_dotenv
 import wandb
 from omegaconf import OmegaConf
+from ptflops import get_model_complexity_info
+
 import argparse
 from model.tokenizer.BPETokenizer import BPETokenizer
 from model.unet import GPUnetT, UnetGPTConfig
@@ -202,16 +204,16 @@ def main(cfg, test=True):
     ###############
     # MODEL FLOPS
 
-    if test:
-        flops, params = get_model_complexity_info(model, (args.context_length,), as_strings=True,
-                                            print_per_layer_stat=True)
-        logger.log(f"model_info: \n FLOPs: {flops}, \nParameters: {params}")
+    
+    flops, params = get_model_complexity_info(model, (args.context_length,), as_strings=True,
+                                        print_per_layer_stat=True)
+    logger.log(f"model_info: \n FLOPs: {flops}, \nParameters: {params}")
 
-        model_dict = vars(cfg).copy()
-        model_dict['attn_config'] = vars(cfg.attn_config)
-        logger.log("model_configured", **model_dict)
+    model_dict = vars(cfg).copy()
+    model_dict['attn_config'] = vars(cfg.attn_config)
+    logger.log("model_configured", **model_dict)
 
-        logger.log(f"estimation of memory {model.memory_before_inference()} MB")
+    logger.log(f"estimation of memory {model.memory_before_inference()} MB")
 
     ###############
     # MODEL PARAMS
@@ -262,7 +264,7 @@ def main(cfg, test=True):
     ptr = 0
     step = 0
     t0 = time.time()
-    
+
     scaler = GradScaler()
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
@@ -404,9 +406,7 @@ if __name__ == "__main__":
     if not args.test:
         wandb.login(key=os.getenv("WANDB_API_KEY"))
         import utils
-    else:
-        from ptflops import get_model_complexity_info
-
+    
     if args.sweep:
 
         cfg = OmegaConf.load(args.sweep_config)
