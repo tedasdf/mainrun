@@ -11,4 +11,4 @@
 
 
 # sweep with gpt and causal didnt work before too much memory ( hopefully its fixed )
-python train.py --orig_yaml "./config/testhyperparams.yaml"
+python3 train.py --orig_yaml "./config/testhyperparams.yaml"
