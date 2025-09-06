@@ -15,24 +15,22 @@ parameters:
   hyperparams.lr:
     values: [ 0.012 , 0.01]
 
-  hyperparams.batch_size:
-    values: [128, 256]
 
   model_configs.unet_gpt.dropout:
     values: [0.1, 0.3]
   
   hyperparams.weight_decay:
-    values: [0.0, 0.1]
-
+    values: [0.0, 0.1 , 0.2]
 
   # Bottleneck sizes to try (sequence per layer)
   model_configs.unet_gpt.hidden_layer_list:
     values:
-      - [512, 384, 256, 192, 128, 192, 256, 384, 512]
-      - [512, 384, 256, 128, 64, 128, 256, 384, 512]
-      - [256, 192, 128, 64, 32, 64, 128, 192, 256]
-      - [512, 256, 128, 64, 32, 64, 128, 256, 512]
+      - [512, 384, 256, 192, 192, 256, 384, 512]
+      - [512, 384, 256, 128, 128, 256, 384, 512]
+      - [256, 192, 128, 64, 64, 128, 192, 256]
+      - [512, 256, 128, 64, 64, 128, 256, 512]
 
-
+  model_configs.unet_gpt.d_model:
+    value: [128, 256]
   
   
