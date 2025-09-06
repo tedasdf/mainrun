@@ -39,7 +39,7 @@ model_configs:
     n_layer: 6
     dropout: 0.1
     init_method: 'xavier'
-    attention_layer: 'sparse'
+    attention_layer: 'causal'
     bottleneck_sizes: [512, 256, 256, 128, 128, 256]
 
 attn_configs:
