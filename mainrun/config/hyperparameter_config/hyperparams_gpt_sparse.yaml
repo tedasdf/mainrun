@@ -56,10 +56,3 @@ attn_configs:
     n_bctx: 2
     intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
 
-
-      #   UNET d_model: 512
-  #   n_head: 8
-  #   n_layer: 6
-  #   dropout: 0.1
-  #   bottleneck_size: 256
-  # unet_gpt:
