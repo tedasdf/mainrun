@@ -24,7 +24,6 @@ jobs:
               bash -c " git config --global --add safe.directory /workspace && \
                        git config --global user.email 'teedsingyau@gmail.com' && \
                        git config --global user.name 'Ted Lo' && \
-                       sed -i 's/\r$//' train.sh && \
                        task train"
 
     

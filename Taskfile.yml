@@ -15,8 +15,9 @@ tasks:
     deps: [checkpoint, download]
     dir: mainrun
     cmds:
-      - chmod +x train.sh      # make sure the script is executable
-      - ./train.sh   
+      - sed -i 's/\r$//' train.sh   # fix line endings first
+      - chmod +x train.sh           # make it executable
+      - ./train.sh 
 
   submit:
     deps: [checkpoint]
