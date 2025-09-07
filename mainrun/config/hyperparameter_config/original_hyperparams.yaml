@@ -1,23 +1,4 @@
 hyperparams:
-    block_size: int = 128
-    batch_size: int = 64
-    vocab_size: int = 16_000
-    n_layer: int = 6
-    n_head: int = 8
-    d_model: int = 512
-    dropout: float = 0.1
-    lr: float = 6e-3
-    weight_decay: float = 0.0
-    evals_per_epoch: int = 3
-    
-    epochs: int = 7
-    seed: int = 1337
-    num_titles: int = 100_000
-    val_frac: float = 0.10
-    log_file: str = "./logs/mainrun.log"
-
-
-hyperparams:
   #############################################
   # FIXED hyperparameters
   #############################################
@@ -41,6 +22,7 @@ hyperparams:
   scheduler: "cosine" # none, linear, cosine
   optimizer: "sgd" 
   evals_per_epoch: 3
+  amp_bool: False
 
 
 
