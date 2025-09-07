@@ -15,4 +15,4 @@
 
 
 
-python train.py --orig_yaml "./config/original_hyperparams.yaml"
+python ./mainrun/train.py --orig_yaml "./config/original_hyperparams.yaml"
