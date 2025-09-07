@@ -1,4 +1,23 @@
 hyperparams:
+    block_size: int = 128
+    batch_size: int = 64
+    vocab_size: int = 16_000
+    n_layer: int = 6
+    n_head: int = 8
+    d_model: int = 512
+    dropout: float = 0.1
+    lr: float = 6e-3
+    weight_decay: float = 0.0
+    evals_per_epoch: int = 3
+    
+    epochs: int = 7
+    seed: int = 1337
+    num_titles: int = 100_000
+    val_frac: float = 0.10
+    log_file: str = "./logs/mainrun.log"
+
+
+hyperparams:
   #############################################
   # FIXED hyperparameters
   #############################################
@@ -7,32 +26,32 @@ hyperparams:
   val_frac: 0.10
   num_titles: 100000
   vocab_size: 16000 # Vocabulary size of the tokenizer
-  context_length: 256
+  context_length: 128
   ##############################################
   # CHANGEABLE hyperparameters
   ##############################################
-  model_architecture: "unet_gpt" # gpt, bottleneck_gpt, unet_gpt
+  model_architecture: "gpt" # gpt, bottleneck_gpt, unet_gpt
   log_file: "./logs/mainrun.log"
   ###############################################
   # Training hyperparameters
   ###############################################
-  batch_size: 128
+  batch_size: 64
   lr: 0.005
   weight_decay: 0.1
   scheduler: "cosine" # none, linear, cosine
-  optimizer: "adamw" 
+  optimizer: "sgd" 
   evals_per_epoch: 3
 
 
 
 model_configs:
   gpt:
-    d_model: 128
-    hidden_layer: 128
+    d_model: 512
+    hidden_layer: 512
     n_layer: 6
     dropout: 0.1
-    init_method: 'xavier'
-    attention_layer: 'sparse'
+    init_method: 'normal'
+    attention_layer: 'causal'
   unet_gpt:
     d_model: 256
     hidden_layer: 128
@@ -55,11 +74,3 @@ attn_configs:
     vertsize: 128
     n_bctx: 2
     intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
-
-
-      #   UNET d_model: 512
-  #   n_head: 8
-  #   n_layer: 6
-  #   dropout: 0.1
-  #   bottleneck_size: 256
-  # unet_gpt:
