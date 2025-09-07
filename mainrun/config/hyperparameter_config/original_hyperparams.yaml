@@ -23,6 +23,7 @@ hyperparams:
   optimizer: "sgd" 
   evals_per_epoch: 3
   amp_bool: False
+  device: 'cpu'
 
 
 
