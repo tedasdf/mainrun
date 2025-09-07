@@ -1,7 +1,12 @@
 name: Train Model
 
 on:
-  workflow_dispatch:   # Run manually
+  workflow_dispatch:
+    inputs:
+      use_gpu:
+        description: 'Use GPU?'
+        required: true
+        default: 'true'
 
 jobs:
   train:
@@ -16,14 +21,22 @@ jobs:
 
       - name: Run training in Docker
         run: |
-          docker run --rm --gpus all \
+          cd /home/labadmin/Documents/mainrun
+          USE_GPU=true   # change to false if you don't want GPU
+          GPU_FLAG=""
+          if [ "$USE_GPU" = "true" ]; then
+            GPU_FLAG="--gpus all"
+          fi
+
+          docker run --rm $GPU_FLAG \
             -v /home/labadmin/Documents/mainrun:/workspace \
             -w /workspace \
             --env-file /home/labadmin/Documents/mainrun/.env \
             mainrun-env-new \
-              bash -c " git config --global --add safe.directory /workspace && \
-                       git config --global user.email 'teedsingyau@gmail.com' && \
-                       git config --global user.name 'Ted Lo' && \
-                       task train"
+            bash -c "git config --global --add safe.directory /workspace && \
+                    git config --global user.email 'teedsingyau@gmail.com' && \
+                    git config --global user.name 'Ted Lo' && \
+                    task train"
+
 
     
