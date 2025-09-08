@@ -54,6 +54,5 @@ attn_configs:
     local_attn_ctx: 32
     sparseblocksize: 64
     vertsize: 128
-    n_bctx: 4
+    n_bctx: 2
     intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
-

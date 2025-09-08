@@ -16,7 +16,7 @@ hyperparams:
   ###############################################
   # Training hyperparameters
   ###############################################
-  batch_size: 256
+  batch_size: 128
   lr: 0.012
   weight_decay: 0.3
   scheduler: "cosine" # none, linear, cosine
