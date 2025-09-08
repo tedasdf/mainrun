@@ -15,4 +15,4 @@
 
 
 
-python3 train.py --orig_yaml "./config/hyperparameter_config/hyperparams_gpt_sparse.yaml"
+python3 train.py --sweep --sweep_config "./config/sweep_config/sweep_gpt_sparse.yaml" --orig_yaml "./config/hyperparameter_config/hyperparams.yaml"
