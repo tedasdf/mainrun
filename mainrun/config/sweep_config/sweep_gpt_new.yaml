@@ -1,0 +1,27 @@
+program: train.py
+method: random   # or grid, or bayes
+metric:
+  name: val/loss
+  goal: minimize
+parameters:
+  hyperparams.lr:
+    values: [ 0.02 , 0.017, 0.012]
+  hyperparams.batch_size:
+    values: [64 , 128]
+  hyperparams.context_length:
+    values:  [256]
+  hyperparams.optimizer:
+    values: ["adamw"]
+  hyperparams.weight_decay:
+    values: [ 0.1  , 0.15, 0.3, 0.5]
+  model_configs.gpt.dropout:
+    values: [0.1, 0.3 , 0.4]
+  model_configs.gpt.d_model:
+    values: [ 128, 256]
+  model_configs.gpt.n_layer:
+    values: [ 6, 8, 10 ]
+
+  model_configs.gpt.init_method:
+    values: ['xavier' , 'normal' , 'kaiming', 'uniform']
+
+
