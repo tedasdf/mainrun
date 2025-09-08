@@ -50,10 +50,10 @@ attn_configs:
   sparse:
     attn_type: 'fixed'  # 'all', 'fixed', 'local'. 'strided'
     n_head: 8
-    num_verts: 16   #
+    num_verts: 8   #
     local_attn_ctx: 32
-    sparseblocksize: 128
+    sparseblocksize: 64
     vertsize: 128
-    n_bctx: 4
+    n_bctx: 2
     intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
 
