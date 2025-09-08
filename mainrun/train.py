@@ -7,7 +7,6 @@ import os
 from dotenv import load_dotenv
 import wandb
 from omegaconf import OmegaConf
-from ptflops import get_model_complexity_info
 
 import argparse
 from model.tokenizer.BPETokenizer import BPETokenizer
@@ -204,12 +203,7 @@ def main(cfg, test=True):
     
 
     ###############
-    # MODEL FLOPS
-
-    
-    flops, params = get_model_complexity_info(model, (args.context_length,), as_strings=True,
-                                        print_per_layer_stat=True)
-    logger.log(f"model_info: \n FLOPs: {flops}, \nParameters: {params}")
+    # MODEL MEMORY
 
     model_dict = vars(cfg).copy()
     model_dict['attn_config'] = vars(cfg.attn_config)
@@ -295,10 +289,6 @@ def main(cfg, test=True):
             else:
                 _, loss = model(xb, yb)
             
-                # l1_norm = sum(p.abs().sum() for p in model.parameters())
-                # l2_norm = sum(p.pow(2).sum() for p in model.parameters())
-
-                # loss = loss + l1_norm * L1 + l2_norm * L2
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)

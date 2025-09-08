@@ -59,7 +59,6 @@ class SparseKAttention(CausalSelfAttention):
         m_topk[torch.arange(B).unsqueeze(1), topk_idx] = 1.0
         return m_topk
 
-
     def sparsek_1d(self, z: torch.Tensor, k: float):
         """
         Evaluate SparseK(z, k) per Algorithm 1 in 'Sparser is Faster and Less is More'.
@@ -115,9 +114,6 @@ class SparseKAttention(CausalSelfAttention):
         ok = valid & left_ok & right_ok & up_ok & down_ok
 
         idx = torch.nonzero(ok, as_tuple=False)
-        if idx.numel() == 0:
-            # very rare numeric tie cases
-            return self._sparsek_bisect(z, k)
 
         i = idx[0].item()        # first candidate in descending beta order
         Ui = int(U[i].item())
@@ -131,22 +127,6 @@ class SparseKAttention(CausalSelfAttention):
         p[perm] = p_sorted
         return p, tau_i, Ui, Wi
 
-
-    def _sparsek_bisect(self, z: torch.Tensor, k: float, iters: int = 60):
-        """Robust monotone solve for tau: sum clip(z - tau,0,1) = k."""
-        lo = (z.min() - 1.0).item()
-        hi = z.max().item()
-        for _ in range(iters):
-            mid = (lo + hi) / 2.0
-            s = torch.clamp(z - mid, 0, 1).sum().item()
-            if s > k:
-                lo = mid
-            else:
-                hi = mid
-        tau = z.new_tensor((lo + hi) / 2.0)
-        p = torch.clamp(z - tau, 0.0, 1.0)
-        return p, tau, None, None
-  
 
     def mask_select_diag(self, msparsek, mtopk):
         """
@@ -169,3 +149,4 @@ class SparseKAttention(CausalSelfAttention):
         masked_matrix = diag_matrix * mask.float()
         
         return masked_matrix
+    
