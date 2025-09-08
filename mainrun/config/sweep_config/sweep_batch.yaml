@@ -1,0 +1,9 @@
+program: train.py
+method: grid   # or grid, or bayes
+metric:
+  name: val/loss
+  goal: minimize
+parameters:
+  hyperparams.batch_size:
+    values: [32, 64 , 128, 256]
+
