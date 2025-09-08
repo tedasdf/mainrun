@@ -1,0 +1,27 @@
+program: train.py
+method: grid
+metric:
+  name: val/loss
+  goal: minimize
+
+parameters:
+  hyperparams.batch_size:
+    values: [128, 256]
+
+  model_configs.unet_gpt.hidden_layer_list:
+    values:
+      - [512, 512, 512, 512, 512, 512]
+      - [512, 256, 256, 128, 128, 256]
+      - [512, 384, 256, 256, 384, 512]
+      - [256, 256, 128, 128, 256, 256]
+  model_configs.gpt.dropout:
+    values: [0.1 ,0.2, 0.3]
+
+  hyperparams.lr:
+    values: [0.12, 0.01, 0.007, 0.005]
+
+  hyperparams.optimizer:
+    values: ["sgd",  "adamw", "adagrad"]
+ 
+  hyperparams.weight_decay:
+    values: [0,0.01,0.1]
