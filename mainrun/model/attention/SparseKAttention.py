@@ -1,66 +1,43 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from attention import AttnConfig
+from attention import AttnConfig, CausalSelfAttention
 import math 
 
 
 @dataclass
 class SparseKAttnConfg(AttnConfig):
     epilson: int
+    k: int
 
 
 
-class SparseKAttention(nn.Module):
+class SparseKAttention(CausalSelfAttention):
     def __init__(self, cfg):
-        super().__init__()
-        # Use bottleneck_dim if provided, else fall back to d_model
-        self.bottleneck_dim = cfg.bottleneck_dim if cfg.bottleneck_dim is not None else cfg.d_model
-        assert self.bottleneck_dim % cfg.n_head == 0, "bottleneck_dim must be divisible by n_head"
-        self.head_dim = self.bottleneck_dim // cfg.n_head  # Per-head dimension
-        self.n_head = cfg.n_head
-        self.d_model = cfg.d_model
-        # QKV projection to bottleneck_dim * 3 (instead of d_model * 3)
-        self.qkv = nn.Linear(cfg.d_model, 3 * self.bottleneck_dim)
-        # Output projection from bottleneck_dim to d_model
-        self.proj = nn.Linear(self.bottleneck_dim, cfg.d_model)
-        self.attn_drop = nn.Dropout(cfg.dropout)
-        self.resid_drop = nn.Dropout(cfg.dropout)
-        
-        self.w_score = nn.Linear(cfg.d_model, 1) # scoring linear
-        self.epilson = cfg.epilson
+        super().__init__(cfg)
+        self.k = cfg.k
        
     def forward(self, x: torch.Tensor):
         B, T, C = x.size()
+
+        u = self.select(x)
+
+        m_topk = self.topk_mask(u, self.k)
+        p, tau_i, _, _ = self.sparsek_1d(u, self.k)
+
+        select_mat = self.mask_select_diag(p , m_topk)
+
         qkv = self.qkv(x).view(B, T, 3, self.n_head, self.head_dim).transpose(1, 3)
         q, k, v = qkv[..., 0, :, :], qkv[..., 1, :, :], qkv[..., 2, :, :]
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att = self.sparsek_mask(att)
-        att = F.softmax(att, dim=-1)
-        att = self.attn_drop(att)
-        y = att @ v
-        y = y.transpose(1, 2).contiguous().view(B, T, self.bottleneck_dim)
-        return self.resid_drop(self.proj(y))
-
-    def sparsek_mask(self, att):
-        """
-        Create a sparse mask that selects only the top-k attention scores for each query.
-        att: (B, n_head, T, T)
-        """
-        B, n_head, T, _ = att.size()
-        k = self.k
-
         
-    def SparseKop(self, u):
-        """"
-        Sparse K operation: select k keys and values based on some strategyou
-        output :
-        Mtopk:
-        threshold
-        """
-        pass
-    
+        k_hat = select_mat @ k
+        v_hat = select_mat @ v
 
+        p_hat = F.softmax(q @ k_hat.T )
+        o = p_hat.T @ v_hat
+        y = o.transpose(1, 2).contiguous().view(B, T, self.bottleneck_dim)
+        return self.resid_drop(self.proj(y))
+        
     def select(self, X):
         B, T ,C = X.shape()
         # shape: (1, T, 1), broadcastable to (B, T, 1)
@@ -68,17 +45,22 @@ class SparseKAttention(nn.Module):
         u = self.w_score(X) + self.epilson * pos
         return u # (B, T , 1)
     
-    def topk(self, u, k):
-        
-        return m_topk
-        # att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        # att = att.masked_fill(self.tril[:T, :T] == 0, float("-inf"))
-        # att = F.softmax(att, dim=-1)
-        # y = att @ v
-        # y = y.transpose(1, 2).contiguous().view(B, T, C)
-        # return self.proj(y)
+    def topk_mask(self, u, k):
+        """
+        u: (B, T) importance scores up to current position i
+        k: number of key-value pairs to select
+        returns: m_topk: binary mask (B, T)
+        """
+        B, T = u.shape
+        m_topk = torch.zeros_like(u, dtype=torch.float32)
 
-    def sparsek_1d(z: torch.Tensor, k: float):
+        # select top-k indices
+        topk_vals, topk_idx = torch.topk(u, min(k, T), dim=1)
+        m_topk[torch.arange(B).unsqueeze(1), topk_idx] = 1.0
+        return m_topk
+
+
+    def sparsek_1d(self, z: torch.Tensor, k: float):
         """
         Evaluate SparseK(z, k) per Algorithm 1 in 'Sparser is Faster and Less is More'.
         z: 1-D tensor of length m
@@ -116,7 +98,7 @@ class SparseKAttention(nn.Module):
         Wv = W[valid]
         if Uv.numel() == 0:
             # fallback to bisection (pathological, e.g., all z equal and integer k edges)
-            return _sparsek_bisect(z, k)
+            return self._sparsek_bisect(z, k)
 
         # sum over [U..W-1] in 0-based is S[W] - S[U]
         seg_sum = S[Wv] - S[Uv]
@@ -135,7 +117,7 @@ class SparseKAttention(nn.Module):
         idx = torch.nonzero(ok, as_tuple=False)
         if idx.numel() == 0:
             # very rare numeric tie cases
-            return _sparsek_bisect(z, k)
+            return self._sparsek_bisect(z, k)
 
         i = idx[0].item()        # first candidate in descending beta order
         Ui = int(U[i].item())
@@ -150,7 +132,7 @@ class SparseKAttention(nn.Module):
         return p, tau_i, Ui, Wi
 
 
-    def _sparsek_bisect(z: torch.Tensor, k: float, iters: int = 60):
+    def _sparsek_bisect(self, z: torch.Tensor, k: float, iters: int = 60):
         """Robust monotone solve for tau: sum clip(z - tau,0,1) = k."""
         lo = (z.min() - 1.0).item()
         hi = z.max().item()
@@ -164,4 +146,26 @@ class SparseKAttention(nn.Module):
         tau = z.new_tensor((lo + hi) / 2.0)
         p = torch.clamp(z - tau, 0.0, 1.0)
         return p, tau, None, None
-`
+  
+
+    def mask_select_diag(self, msparsek, mtopk):
+        """
+        Args:
+            msparsek: Tensor of shape (T,) or (1, T) with soft scores
+            mtopk: Tensor of shape (T,) or (1, T) with 0/1 hard selection
+
+        Returns:
+            Tensor of shape (T, T): Diagonal matrix with masked scores
+        """
+        # Ensure the vectors are 1D
+        msparsek = msparsek.flatten()
+        mtopk = mtopk.flatten()
+        
+        # Create diagonal matrix from msparsek
+        diag_matrix = torch.diag(msparsek)
+        
+        # Apply row mask: keep only rows where mtopk == 1
+        mask = mtopk.unsqueeze(1).expand_as(diag_matrix)  # shape (T, T)
+        masked_matrix = diag_matrix * mask.float()
+        
+        return masked_matrix
