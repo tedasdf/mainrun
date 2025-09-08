@@ -17,8 +17,8 @@ hyperparams:
   # Training hyperparameters
   ###############################################
   batch_size: 128
-  lr: 0.012
-  weight_decay: 0.3
+  lr: 0.02
+  weight_decay: 0.5
   scheduler: "cosine" # none, linear, cosine
   optimizer: "adamw" 
   evals_per_epoch: 3
@@ -31,8 +31,8 @@ model_configs:
     d_model: 128
     hidden_layer: 128
     n_layer: 8
-    dropout: 0.4
-    init_method: 'normal'
+    dropout: 0.1
+    init_method: 'xavier'
     attention_layer: 'sparse'
   unet_gpt:
     d_model: 512
