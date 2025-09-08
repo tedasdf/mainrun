@@ -50,12 +50,12 @@ attn_configs:
   sparse:
     attn_type: 'fixed'  # 'all', 'fixed', 'local'. 'strided'
     n_head: 8
-    num_verts: 8   #
+    num_verts: 16   #
     local_attn_ctx: 32
-    sparseblocksize: 64
+    sparseblocksize: 128
     vertsize: 128
-    n_bctx: 2
-    intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
+    n_bctx: 4
+    intermediate_dim : 64 # if 0 , normal , elif > 0 , bottleneck
 
 
       #   UNET d_model: 512
