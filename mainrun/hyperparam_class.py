@@ -17,7 +17,6 @@ class Hyperparameters:
     optimizer: str
     evals_per_epoch: float
     amp_bool: bool
-    device: str
 
 
 

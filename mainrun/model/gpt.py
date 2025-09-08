@@ -102,7 +102,7 @@ class Block(nn.Module):
             x = self.ln2(x + self.mlp(x))
         return x
     
-    def block_memory_before_inference(self, dtype=torch.float32):
+    def memory_before_inference(self, dtype=torch.float32):
         total_mem = 0
 
         # Attention memory

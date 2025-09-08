@@ -17,13 +17,12 @@ hyperparams:
   # Training hyperparameters
   ###############################################
   batch_size: 64
-  lr: 0.005
+  lr: 0.006
   weight_decay: 0.1
   scheduler: "cosine" # none, linear, cosine
   optimizer: "sgd" 
   evals_per_epoch: 3
   amp_bool: False
-  device: 'cpu'
 
 
 

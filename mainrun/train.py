@@ -139,7 +139,7 @@ def main(cfg, test=True):
 
 
 
-    device = args.device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.log("device_info", device=device)
 
     train_titles, val_titles = get_titles(args.num_titles, args.seed, args.val_frac)
