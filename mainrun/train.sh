@@ -15,4 +15,4 @@
 
 
 
-python3 train.py --sweep --orig_yaml "./config/training.yaml" --sweep_config "./config/sweep_config/sweep_sparsek.yaml"
+python3 train.py --orig_yaml "./config/training.yaml" 

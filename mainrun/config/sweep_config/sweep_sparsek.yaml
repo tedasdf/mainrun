@@ -5,7 +5,7 @@ metric:
   goal: minimize
 parameters:
   attn_configs.sparsek.n_head:
-    values: [ 8, 10]
+    values: [ 8, 16]
   attn_configs.sparsek.epilson:
     values: [1e-6 , 5e-6 , 7e-6]
   attn_configs.sparsek.k:
