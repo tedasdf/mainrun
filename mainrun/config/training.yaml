@@ -56,3 +56,8 @@ attn_configs:
     vertsize: 128
     n_bctx: 2
     intermediate_dim : 0 # if 0 , normal , elif > 0 , bottleneck
+  sparsek:
+    n_head: 8
+    intermediate_dim : 0 #
+    epilson: 1e-6
+    k: 10
