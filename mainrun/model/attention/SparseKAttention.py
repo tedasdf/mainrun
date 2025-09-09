@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from attention.attention import AttnConfig, CausalSelfAttention
+from model.attention.attention import AttnConfig, CausalSelfAttention
 import math 
 from dataclasses import dataclass
 
