@@ -56,11 +56,8 @@ attn_configs:
     vertsize: 128
     n_bctx: 4
     intermediate_dim : 64 # if 0 , normal , elif > 0 , bottleneck
-
-
-      #   UNET d_model: 512
-  #   n_head: 8
-  #   n_layer: 6
-  #   dropout: 0.1
-  #   bottleneck_size: 256
-  # unet_gpt:
+  sparsek:
+    n_head: 8
+    intermediate_dim : 0 #
+    epilson: 1e-6
+    k: 10

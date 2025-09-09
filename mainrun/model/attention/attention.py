@@ -84,8 +84,8 @@ class CausalSelfAttention(nn.Module):
 
 
 class SparseCausalSelfAttention(CausalSelfAttention):
-    def __init__(self, cfg, n_ctx):
-        super().__init__(cfg)
+    def __init__(self, cfg, output_dim=None, n_ctx= None):
+        super().__init__(cfg, output_dim)
         self.attn_type = cfg.type
         self.register_buffer("tril", self._create_sparse_causal_mask(cfg, n_ctx))
 

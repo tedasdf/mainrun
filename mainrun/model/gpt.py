@@ -1,3 +1,7 @@
+import torch
+import torch.nn as nn
+from torch.nn import functional as F
+from dataclasses import dataclass
 
 from model.attention.attention import (
     AttnConfig, 
@@ -5,11 +9,10 @@ from model.attention.attention import (
     SparseAttnConfig,
     SparseCausalSelfAttention,
 )
-
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
-from dataclasses import dataclass
+from model.attention.SparseKAttention import (
+    SparseKAttention,
+    SparseKAttnConfg
+)
 
 @dataclass
 class ModelConfig:
@@ -74,14 +77,16 @@ class Block(nn.Module):
         else:
             attn_cfg.d_model = hidden_layer 
         
-        
         self.residual_proj = nn.Linear(hidden_layer, output_dim) if hidden_layer != output_dim else nn.Identity()
-
         
         if isinstance(attn_cfg, AttnConfig):
             self.attn = CausalSelfAttention(attn_cfg, output_dim)
         elif isinstance(attn_cfg, SparseAttnConfig):
-             self.attn = SparseCausalSelfAttention(attn_cfg, output_dim, context_length)
+            self.attn = SparseCausalSelfAttention(attn_cfg, output_dim, context_length)
+        elif isinstance(attn_cfg, SparseKAttnConfg):
+            self.attn = SparseKAttention(
+                attn_cfg, output_dim
+            )
         else:
             raise ValueError("Unsupported attention configuration")
         

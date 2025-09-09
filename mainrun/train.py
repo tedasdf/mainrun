@@ -1,30 +1,37 @@
+import os
+import copy
+import argparse
+import json
+import  random, time
+import wandb
+from tqdm import tqdm
+import structlog
+from pathlib import Path
+from dotenv import load_dotenv
+from omegaconf import OmegaConf
+
+import torch
+import torch.nn as nn
+from torch.cuda.amp import autocast
+from torch.amp import GradScaler
+from torch.nn import functional as F
+from datasets import load_dataset
+from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
+
+
+from hyperparam_class import Hyperparameters 
+
+from model.tokenizer.BPETokenizer import BPETokenizer
+from model.unet import GPUnetT, UnetGPTConfig
 from model.gpt import GPT, GPTConfig
 from model.attention.attention import (
     AttnConfig,
     SparseAttnConfig
 )
-import os
-from dotenv import load_dotenv
-import wandb
-from omegaconf import OmegaConf
+from model.attention.SparseKAttention import (
+    SparseKAttnConfg
+)
 
-import argparse
-from model.tokenizer.BPETokenizer import BPETokenizer
-from model.unet import GPUnetT, UnetGPTConfig
-import copy
-import  random, time
-import json
-from pathlib import Path
-from torch.cuda.amp import autocast
-from torch.amp import GradScaler
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
-from datasets import load_dataset
-from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
-from tqdm import tqdm
-import structlog
-from hyperparam_class import Hyperparameters 
 
 
 def configure_logging(log_file: str):
@@ -125,7 +132,6 @@ def main(cfg, test=True):
 
     # Map into dataclass for your code
     args = Hyperparameters(**hparams)
-    
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     
@@ -133,16 +139,14 @@ def main(cfg, test=True):
     logger = configure_logging(args.log_file)
     
     hyperparams_dict = vars(args)
-    
     logger.log("hyperparameters_configured", **hyperparams_dict)
-
-
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.log("device_info", device=device)
 
     train_titles, val_titles = get_titles(args.num_titles, args.seed, args.val_frac)
     
+    ## Tokenizer and dataset
     eos_token = "<eos>"
     tok = BPETokenizer(train_tokenizer(train_titles+val_titles, args.vocab_size, eos_token=eos_token))
     train_text = eos_token.join(train_titles) + eos_token
@@ -176,8 +180,13 @@ def main(cfg, test=True):
             dropout=modelparams['dropout'],
             **attnparams
         )
-        
-
+    elif modelparams['attention_layer'] == 'sparsek':
+        attn = SparseKAttnConfg(
+            d_model=modelparams['d_model'],
+            block_size=args.context_length,
+            dropout=modelparams['dropout'],
+            **attnparams
+        )
 
     #### Model setup
     if args.model_architecture == "gpt":
@@ -261,7 +270,10 @@ def main(cfg, test=True):
     step = 0
     t0 = time.time()
 
+    ## torch amp automatic mixed precision (reduce inferencing memory)
     scaler = GradScaler()
+    
+    
     for epoch in range(1, args.epochs + 1):
         for _ in tqdm(range(1, batches + 1), desc=f"Epoch {epoch}/{args.epochs}"):
             step += 1
@@ -331,6 +343,8 @@ def main(cfg, test=True):
         wandb.log_artifact(artifact)
         wandb.finish()
 
+
+
 def merge_dotted_keys(base_dict, update_dict, target_path=None):
     """
     Merge keys with dots into nested dicts.
@@ -362,7 +376,7 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     load_dotenv(dotenv_path=".env")
     
-    
+    # Input from command line
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", action="store_true", help="Run test")
     parser.add_argument("--sweep", action="store_true", help="Run hyperparameter sweep")
@@ -370,7 +384,7 @@ if __name__ == "__main__":
     parser.add_argument("--orig_yaml", type=str, default="config/hyperparams.yaml")
     args = parser.parse_args()
 
- 
+    # wandb sweep function
     def sweep_train():
         orig_cfg = OmegaConf.load(args.orig_yaml) # defaults
         cfg = copy.deepcopy(orig_cfg)  # create a separate copy to modify
