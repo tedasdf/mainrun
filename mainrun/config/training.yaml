@@ -19,7 +19,7 @@ hyperparams:
   batch_size: 256
   lr: 0.02
   weight_decay: 0.5
-  scheduler: "cosine" # none, linear, cosine
+  scheduler: "linear" # none, linear, cosine
   optimizer: "adamw" 
   evals_per_epoch: 3
   amp_bool: True
