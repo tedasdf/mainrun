@@ -12,3 +12,4 @@ parameters:
     values: [32 , 64 ]
   model_configs.gpt.d_model:
     values: [128, 256]
+    

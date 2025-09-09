@@ -11,7 +11,6 @@ class SparseKAttnConfg(AttnConfig):
     k: int
 
 
-
 class SparseKAttention(CausalSelfAttention):
     def __init__(self, cfg, output_dim):
         super().__init__(cfg, output_dim)
@@ -27,20 +26,17 @@ class SparseKAttention(CausalSelfAttention):
 
         m_topk = self.topk_mask(u, self.k)
         p = self.sparsek_nd(u, self.k)
-        print("shaep fo p :")
-        print(p.shape)
+
         select_mat = self.mask_select_diag(p , m_topk)
-        print(select_mat.shape)
+
         qkv = self.qkv(x).view(B, T, 3, self.n_head, self.head_dim).transpose(1, 3)
         q, k, v = qkv[..., 0, :, :], qkv[..., 1, :, :], qkv[..., 2, :, :]
-        print("KEY SHAPE")
-        print(k.shape)
+
         # einsum: batch-wise matmul across sequence dimension
         k_hat = torch.matmul(select_mat.unsqueeze(1), k)  # (B, 1, T, head_dim)
         v_hat = torch.matmul(select_mat.unsqueeze(1), v)  # same
 
-        print("V hat")
-        print(v_hat.shape)
+
         p_hat = F.softmax(q @ k_hat.transpose(-2,-1) )
         o = p_hat.transpose(-2,-1) @ v_hat
         print(o.transpose(1, 2).shape)
