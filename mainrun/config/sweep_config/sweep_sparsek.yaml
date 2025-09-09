@@ -10,3 +10,5 @@ parameters:
     values: [1e-6 , 5e-6 , 7e-6]
   sparsek.k:
     values: [32 , 64 ]
+  model_configs.gpt.d_model:
+    values: [128, 256]
